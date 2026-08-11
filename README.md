@@ -66,10 +66,12 @@ speed compared to centralized and standard federated baselines.
    integrity/fingerprint layer itself.
 5. Assess the system's robustness against client dropouts, non-IID data
    distribution across clients, and adversarial/malicious client updates —
-   measuring the custom protocol's early detection rate and false-positive
-   rate on injected label-flipping and backdoor poisoning attacks, and
-   comparing outcomes with and without server-side aggregation defenses
-   (e.g., Krum, trimmed mean) layered on top.
+   specifically, testing whether a single global anomaly threshold
+   systematically misclassifies honest non-IID clients as malicious, and
+   evaluating Mondrian-style per-cluster threshold calibration as a
+   mitigation, measured via detection rate and false-positive rate on
+   injected label-flipping and backdoor poisoning attacks across repeated
+   trials.
 
 ## Motivation
 
@@ -122,6 +124,40 @@ anomaly filtering, co-designed with (rather than bolted onto) an
 efficiency-oriented FL communication protocol for NIDS — is not directly
 addressed in existing literature, which is the gap this project targets.
 
+### Research Question
+
+Anomaly-based filtering (this project's fingerprint check, and existing
+methods like Krum) all rely on the same signal: *how different is this
+update from the consensus?* That signal has a known weakness — under
+**non-IID** clients (Objective 5), an honest client's update can look
+"different from consensus" for entirely legitimate reasons (its local
+traffic genuinely differs), not because it is malicious. A single **global**
+anomaly threshold cannot distinguish "different because malicious" from
+"different because honestly non-IID." This is structurally the same failure
+mode as *marginal vs. subgroup-conditional coverage* in conformal
+prediction — a global calibration that looks fine on average can fail badly
+for specific subgroups.
+
+This project investigates that question directly, and evaluates the
+analogous fix: **Mondrian-style stratified calibration.** Instead of one
+global threshold, clients are grouped into clusters based on their local
+data-distribution profile (computed from calibration-round data only, to
+avoid leakage — the update statistics of the *current* round under test are
+never used to define the clusters), and a separate anomaly threshold is
+calibrated per cluster. The research question is:
+
+> **Does a single global fingerprint threshold systematically misclassify
+> honest non-IID clients as malicious, and does Mondrian-style per-cluster
+> threshold calibration reduce that false-positive rate without weakening
+> real poisoning-attack detection?**
+
+This project does not claim to invent Mondrian calibration, conformal
+prediction, or FedAvg — all are established techniques. The contribution is
+testing whether a documented subgroup-conditional failure mode of
+consensus-based anomaly detection reappears in transport-layer FL security
+filtering under non-IID clients, and empirically evaluating a
+stratified-calibration mitigation for it.
+
 ## Custom Protocol Design (Concrete Specification)
 
 Every round, each client sends its update `δθ = θ_local − θ_global` (the
@@ -148,18 +184,31 @@ next to the full model):
 1. Verify the integrity tag. Mismatch → reject outright.
 2. Compute a z-score of the global L2 norm against a rolling mean/std of that
    client's own recent accepted norms. Large deviation → flag.
-3. Compare the two cosine similarities against thresholds (tuned on a
-   validation split with simulated attacks). Low similarity → flag.
+3. Compare the two cosine similarities against thresholds. Low similarity →
+   flag.
 4. **Unflagged updates** go straight into standard FedAvg. **Flagged
    updates** are routed to the heavier existing defenses (Krum / trimmed
    mean) for a second, more expensive check — rather than running those
    expensive checks on every client, every round.
 
+**4. Two threshold-calibration variants, compared head-to-head (this is the
+Research Question above, made operational):**
+- **Global variant (baseline):** one threshold, fit across all clients
+  together.
+- **Mondrian variant:** clients are assigned to a cluster (e.g., via k-means
+  on each client's local class-distribution / feature-summary profile,
+  computed once from calibration-round data), and each cluster gets its own
+  threshold, fit only from that cluster's calibration-round statistics.
+
+Both variants are run against the same attack simulations so their
+false-positive rate (on honest, non-IID clients) and detection rate (on
+injected malicious clients) can be compared directly.
+
 This is what makes the "cheap filter before expensive aggregation" claim in
 the Novelty section concrete and implementable, rather than a placeholder
-phrase. Thresholds, and whether flagged updates are hard-rejected vs.
-down-weighted, are tuning decisions to be made empirically once attack
-simulations (Phase: poisoning evaluation) are running.
+phrase. Threshold values, cluster count, and whether flagged updates are
+hard-rejected vs. down-weighted are tuning decisions to be made empirically
+once attack simulations (Phase: poisoning evaluation) are running.
 
 ## Scope
 
@@ -171,26 +220,66 @@ solid.
 
 **Core (must have, in build order):**
 1. NSL-KDD preprocessing
-2. Multiple simulated clients (IID split first)
+2. Multiple simulated clients — **IID split first** (get the pipeline
+   working), then a **non-IID split** (required, not optional — the research
+   question depends on it)
 3. MLP model
 4. FedAvg training loop, evaluated against a centralized baseline
 5. Custom protocol: integrity tag + fingerprint, wired into the training loop
 6. One poisoning attack simulated (label-flipping — simplest to implement)
-7. Comparison: standard HTTP/gRPC-style transfer vs. custom protocol, on
+7. **Global vs. Mondrian-style per-cluster threshold comparison** — the
+   central experiment answering the Research Question
+8. Repeated trials (≥15–20 random seeds) with mean ± std reported, plus a
+   basic significance test (e.g., paired t-test) comparing global vs.
+   Mondrian false-positive rates
+9. Comparison: standard HTTP/gRPC-style transfer vs. custom protocol, on
    communication overhead, detection rate, false-positive rate
-8. Accuracy / precision / recall / F1 reporting
+10. Accuracy / precision / recall / F1 reporting
 
 **Stretch goals (add only after the core works and is evaluated):**
-- Non-IID client data partitioning
 - Krum / trimmed mean as a fallback layer for flagged updates
 - Client dropout simulation
 - Backdoor attack (in addition to label-flipping)
-- CICIDS2017 as a second dataset
+- Distribution-shift stress test: a client's traffic profile drifts mid-
+  training (e.g., a previously unseen attack type appears), comparing how
+  global vs. Mondrian thresholds degrade
+- **CICIDS2017 as a replication study** — explicitly framed as testing
+  whether the global-vs-Mondrian effect holds in an independent dataset, not
+  just "more data"
 - Scalability experiments (more simulated clients)
 
 The single most important thing for the final grade is a **working,
 measured core** — a partially-implemented long feature list is worse than a
 complete short one.
+
+## Evaluation Plan
+
+Evaluation is deliberately multi-axis, not just accuracy:
+
+- **Detection performance:** accuracy, precision, recall, F1-score of the
+  underlying NIDS model.
+- **Attack detection rate:** % of injected poisoned updates caught, global
+  vs. Mondrian threshold.
+- **False-positive rate on honest clients:** % of legitimate non-IID clients
+  wrongly flagged, global vs. Mondrian threshold — this is the headline
+  comparison for the Research Question.
+- **Communication overhead:** bytes transferred, custom protocol vs.
+  standard HTTP/gRPC-style baseline.
+- **Latency/compute cost:** overhead added by computing and checking the
+  fingerprint itself.
+- **Convergence behaviour:** accuracy vs. training round, with and without
+  active poisoning.
+- **Statistical robustness:** all of the above repeated across ≥15–20
+  random seeds (client partitioning + attack injection), reported as mean ±
+  std, with a significance test on the headline comparison.
+- **Distribution shift (stretch):** how detection/false-positive rates
+  change when a client's traffic profile drifts mid-training.
+
+**Methodological honesty note:** client heterogeneity (non-IID splits) is
+*simulated* by partitioning a single-source dataset (NSL-KDD / CICIDS2017)
+unevenly across clients — it does not represent real multi-organization
+deployment data. This is stated explicitly rather than implied, consistent
+with how datasets and their limitations should be reported.
 
 ## Model
 
@@ -254,6 +343,10 @@ pip install -r requirements.txt
   security-fused protocol (integrity + anomaly fingerprinting at the
   transport layer). Implementation planned after the baseline federated
   pipeline (Phases 1–7) is working end to end.
+- **Research question finalized:** global vs. Mondrian-style per-cluster
+  fingerprint threshold calibration, testing whether non-IID honest clients
+  are systematically misclassified as malicious under a global threshold.
+  Not yet implemented — depends on Phases 3–7 being done first.
 
 ## References
 
