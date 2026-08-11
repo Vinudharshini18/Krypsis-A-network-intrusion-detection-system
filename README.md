@@ -1,4 +1,7 @@
-# Federated Learning-based Network Intrusion Detection with a Custom Communication Protocol
+# Krypsis — Federated Learning-based Network Intrusion Detection with a Custom Communication Protocol
+
+A federated learning based network intrusion detection system using a custom
+communication protocol.
 
 ## Team Members
 
