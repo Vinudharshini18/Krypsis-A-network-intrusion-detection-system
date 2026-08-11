@@ -122,6 +122,76 @@ anomaly filtering, co-designed with (rather than bolted onto) an
 efficiency-oriented FL communication protocol for NIDS — is not directly
 addressed in existing literature, which is the gap this project targets.
 
+## Custom Protocol Design (Concrete Specification)
+
+Every round, each client sends its update `δθ = θ_local − θ_global` (the
+difference between its locally trained weights and the global weights it
+started the round with). The protocol wraps this payload as follows:
+
+**1. Integrity tag** — an HMAC (or SHA-256 hash) computed over the serialized
+`δθ`, sent alongside the payload. The server recomputes it on receipt; a
+mismatch means the update was corrupted or tampered with in transit, and it
+is rejected immediately, before any further processing.
+
+**2. Fingerprint vector** — a small set of cheap summary statistics computed
+over `δθ`, sent as a compact header (a handful of floats, negligible size
+next to the full model):
+
+| Statistic | What it captures |
+|---|---|
+| `‖δθ‖₂` (global L2 norm) | Overall magnitude of the update |
+| `‖δθ_layer‖₂` per layer (3 values, one per MLP layer) | Whether the perturbation is concentrated in one layer (e.g., the output layer — common in label-flipping attacks) |
+| `cos_sim(δθ, δθ_prev)` | Similarity to this same client's update last round — flags a client suddenly behaving very differently |
+| `cos_sim(δθ, δθ_mean_this_round)` | Similarity to the average direction of all clients this round — flags an update pointing away from consensus (same intuition as Krum, computed as one cheap number instead of full pairwise distances) |
+
+**3. Server-side decision rule (cheap, before aggregation):**
+1. Verify the integrity tag. Mismatch → reject outright.
+2. Compute a z-score of the global L2 norm against a rolling mean/std of that
+   client's own recent accepted norms. Large deviation → flag.
+3. Compare the two cosine similarities against thresholds (tuned on a
+   validation split with simulated attacks). Low similarity → flag.
+4. **Unflagged updates** go straight into standard FedAvg. **Flagged
+   updates** are routed to the heavier existing defenses (Krum / trimmed
+   mean) for a second, more expensive check — rather than running those
+   expensive checks on every client, every round.
+
+This is what makes the "cheap filter before expensive aggregation" claim in
+the Novelty section concrete and implementable, rather than a placeholder
+phrase. Thresholds, and whether flagged updates are hard-rejected vs.
+down-weighted, are tuning decisions to be made empirically once attack
+simulations (Phase: poisoning evaluation) are running.
+
+## Scope
+
+This project is ambitious (FL + custom protocol + integrity + fingerprinting
++ poisoning attacks + robust aggregation + non-IID + multiple datasets). To
+keep it achievable within a UG timeline, work is split into a **core** that
+must fully work end-to-end, and **stretch goals** added only once the core is
+solid.
+
+**Core (must have, in build order):**
+1. NSL-KDD preprocessing
+2. Multiple simulated clients (IID split first)
+3. MLP model
+4. FedAvg training loop, evaluated against a centralized baseline
+5. Custom protocol: integrity tag + fingerprint, wired into the training loop
+6. One poisoning attack simulated (label-flipping — simplest to implement)
+7. Comparison: standard HTTP/gRPC-style transfer vs. custom protocol, on
+   communication overhead, detection rate, false-positive rate
+8. Accuracy / precision / recall / F1 reporting
+
+**Stretch goals (add only after the core works and is evaluated):**
+- Non-IID client data partitioning
+- Krum / trimmed mean as a fallback layer for flagged updates
+- Client dropout simulation
+- Backdoor attack (in addition to label-flipping)
+- CICIDS2017 as a second dataset
+- Scalability experiments (more simulated clients)
+
+The single most important thing for the final grade is a **working,
+measured core** — a partially-implemented long feature list is worse than a
+complete short one.
+
 ## Model
 
 - **Architecture:** Multi-Layer Perceptron (MLP) — feedforward neural network
