@@ -30,31 +30,46 @@ client trains a local model on its own data and shares only model updates
 global model using a federated averaging strategy (FedAvg).
 
 To support this distributed training process efficiently and securely, the
-project also designs and implements a custom lightweight communication protocol
-tailored specifically for exchanging model updates between clients and the
-server — optimizing for reduced bandwidth usage, message integrity, and
-resilience to client dropout, rather than relying on generic protocols like
-HTTP/gRPC out of the box. The resulting system is evaluated on standard
-intrusion detection datasets (e.g., NSL-KDD / CICIDS2017) across multiple
-simulated clients, measuring detection accuracy, communication overhead, and
-convergence speed compared to centralized and standard federated baselines.
+project designs and implements a custom **security-fused communication
+protocol** for exchanging model updates between clients and the server. Unlike
+generic protocols (HTTP/gRPC) or prior communication-efficiency work — which
+treats bandwidth optimization and security as separate concerns, with
+malicious-update detection only happening after the full update has been
+received and processed by the server — this protocol attaches a lightweight
+integrity tag and a compact statistical "fingerprint" to every update at send
+time. The server performs a cheap first-pass anomaly check against this
+fingerprint before committing to expensive aggregation, allowing tampered,
+corrupted, or blatantly poisoned updates to be rejected early and cheaply,
+rather than only being caught (or missed) by post-hoc robust aggregation
+methods (e.g., Krum, trimmed mean). The resulting system is evaluated on
+standard intrusion detection datasets (e.g., NSL-KDD / CICIDS2017) across
+multiple simulated clients, measuring detection accuracy, communication
+overhead, poisoning-attack detection/false-positive rates, and convergence
+speed compared to centralized and standard federated baselines.
 
 ## Objectives
 
 1. Design a Federated Learning framework capable of training an intrusion
    detection model across multiple distributed clients without centralizing
    raw network traffic data.
-2. Design and implement a custom communication protocol for efficient and
-   reliable exchange of model updates between clients and the aggregating
-   server.
+2. Design and implement a custom, security-fused communication protocol that
+   combines lightweight message integrity verification and a cheap
+   transport-layer anomaly "fingerprint" check with efficient exchange of
+   model updates — filtering tampered or malicious updates before they reach
+   the server's aggregation stage, rather than relying solely on post-hoc
+   server-side robust aggregation.
 3. Evaluate the system's intrusion detection performance (accuracy, precision,
    recall, F1-score) on benchmark datasets under a federated setting.
 4. Analyse communication overhead, convergence behaviour, and scalability of
    the custom protocol against standard federated learning communication
-   methods (e.g., gRPC/HTTP as baseline).
+   methods (e.g., gRPC/HTTP as baseline), including the added cost of the
+   integrity/fingerprint layer itself.
 5. Assess the system's robustness against client dropouts, non-IID data
-   distribution across clients, and potential adversarial/malicious client
-   updates.
+   distribution across clients, and adversarial/malicious client updates —
+   measuring the custom protocol's early detection rate and false-positive
+   rate on injected label-flipping and backdoor poisoning attacks, and
+   comparing outcomes with and without server-side aggregation defenses
+   (e.g., Krum, trimmed mean) layered on top.
 
 ## Motivation
 
@@ -78,6 +93,34 @@ design of a custom, purpose-built communication protocol that makes federated
 NIDS both more practical for real-world, bandwidth-constrained deployments and
 more secure against communication-level threats, ultimately contributing
 toward a scalable, privacy-preserving approach to network security.
+
+## Novelty / Research Gap
+
+Federated Learning for NIDS is a well-established research area (see
+`References` below for a comprehensive 2024 survey). Within it, two
+sub-problems are usually solved **separately**:
+
+- **Communication efficiency** — reducing the bandwidth cost of sending model
+  updates, typically via compression, quantization, or smarter client
+  selection (e.g., eFedAD, adaptive client selection). These approaches do
+  not address security.
+- **Robustness to malicious/poisoned updates** — typically handled entirely
+  at the server, *after* an update has already been fully received and
+  processed, via robust aggregation strategies (FedAvg variants, Krum,
+  trimmed mean, median-based aggregation).
+
+**This project fuses the two at the protocol level.** Rather than treating
+bandwidth and security as independent concerns solved at different stages,
+the custom protocol attaches a compact integrity tag and statistical
+fingerprint to each update at the point of transmission, enabling a cheap,
+early anomaly check *before* the expensive server-side aggregation pipeline
+runs — reducing wasted bandwidth/compute on updates that are corrupted or
+maliciously poisoned, while still allowing existing robust-aggregation
+methods to run as a second line of defense on updates that pass. To the best
+of our review, this specific combination — transport-layer integrity +
+anomaly filtering, co-designed with (rather than bolted onto) an
+efficiency-oriented FL communication protocol for NIDS — is not directly
+addressed in existing literature, which is the gap this project targets.
 
 ## Model
 
@@ -137,5 +180,21 @@ pip install -r requirements.txt
 - **Phase 5 — Model definition:** Not started.
 - **Phase 6 — Federated training loop (FedAvg):** Not started.
 - **Phase 7 — Evaluation:** Not started.
-- **Custom communication protocol (Objective 2):** Not started — planned after
-  the baseline federated pipeline (Phases 1–7) is working end to end.
+- **Custom communication protocol (Objective 2):** Direction finalized —
+  security-fused protocol (integrity + anomaly fingerprinting at the
+  transport layer). Implementation planned after the baseline federated
+  pipeline (Phases 1–7) is working end to end.
+
+## References
+
+- Khraisat, A., Alazab, A., Singh, S., Jan, T., & Gomez, A. Jr. (2024).
+  Survey on Federated Learning for Intrusion Detection System: Concept,
+  Architectures, Aggregation Strategies, Challenges, and Future Directions.
+  *ACM Computing Surveys, 57*(1), Article 7.
+  https://doi.org/10.1145/3687124
+- Communication-Efficient Federated Learning for Network Traffic Anomaly
+  Detection (eFedAD). IEEE Conference Publication.
+  https://ieeexplore.ieee.org/iel8/10566866/10566894/10566998.pdf
+- Reducing Communication Overhead in Federated Learning for Network Anomaly
+  Detection with Adaptive Client Selection (2025). arXiv:2503.15448.
+  https://arxiv.org/pdf/2503.15448
