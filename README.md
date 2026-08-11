@@ -311,13 +311,17 @@ with how datasets and their limitations should be reported.
 
 ```
 fl-nids-project/
-├── data/                   # Raw dataset files (not tracked in git)
-│   ├── KDDTrain+.txt
-│   └── KDDTest+.txt
-├── venv/                   # Python virtual environment (not tracked in git)
-├── requirements.txt        # Python dependencies
+├── data/
+│   ├── KDDTrain+.txt        # Raw dataset files
+│   ├── KDDTest+.txt
+│   └── processed/           # Preprocessed arrays (not tracked in git;
+│                             # regenerate via src/preprocess.py)
+├── src/
+│   └── preprocess.py        # Phase 3 — preprocessing
+├── venv/                    # Python virtual environment (not tracked in git)
+├── requirements.txt         # Python dependencies
 ├── .gitignore
-└── README.md                # This file
+└── README.md                 # This file
 ```
 
 ## Setup
@@ -334,7 +338,13 @@ pip install -r requirements.txt
   environment created, `requirements.txt` defined.
 - **Phase 2 — Dataset acquisition:** Done. NSL-KDD train/test files downloaded
   into `data/`.
-- **Phase 3 — Preprocessing:** Not started.
+- **Phase 3 — Preprocessing:** Done. `src/preprocess.py` loads
+  `KDDTrain+.txt` / `KDDTest+.txt`, one-hot encodes categorical columns
+  (fit on train only), scales numeric columns to [0, 1] (fit on train
+  only), and builds a binary (`normal` vs `attack`) label — 122 final
+  features, 125,973 train / 22,544 test rows. Output cached in
+  `data/processed/` (not tracked in git; regenerate by re-running the
+  script).
 - **Phase 4 — Client simulation (data partitioning):** Not started.
 - **Phase 5 — Model definition:** Not started.
 - **Phase 6 — Federated training loop (FedAvg):** Not started.
