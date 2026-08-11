@@ -317,7 +317,8 @@ fl-nids-project/
 │   └── processed/           # Preprocessed arrays (not tracked in git;
 │                             # regenerate via src/preprocess.py)
 ├── src/
-│   └── preprocess.py        # Phase 3 — preprocessing
+│   ├── preprocess.py         # Phase 3 — preprocessing
+│   └── client_simulation.py  # Phase 4 — client data partitioning
 ├── venv/                    # Python virtual environment (not tracked in git)
 ├── requirements.txt         # Python dependencies
 ├── .gitignore
@@ -345,7 +346,14 @@ pip install -r requirements.txt
   features, 125,973 train / 22,544 test rows. Output cached in
   `data/processed/` (not tracked in git; regenerate by re-running the
   script).
-- **Phase 4 — Client simulation (data partitioning):** Not started.
+- **Phase 4 — Client simulation (data partitioning):** Done.
+  `src/client_simulation.py` implements both splits across 5 simulated
+  clients: an **IID split** (random even shuffle — verified near-identical
+  ~46-47% attack rate per client) and a **non-IID split** (Dirichlet
+  partition, alpha=0.5, over the original attack-type categories, not just
+  the binary label — verified genuinely heterogeneous clients, from 8.2% to
+  98.2% attack rate, each dominated by different attack categories). Client
+  assignments cached in `data/processed/client_assignment_{iid,non_iid}.npy`.
 - **Phase 5 — Model definition:** Not started.
 - **Phase 6 — Federated training loop (FedAvg):** Not started.
 - **Phase 7 — Evaluation:** Not started.
