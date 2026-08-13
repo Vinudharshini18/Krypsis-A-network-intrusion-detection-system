@@ -318,7 +318,10 @@ fl-nids-project/
 │                             # regenerate via src/preprocess.py)
 ├── src/
 │   ├── preprocess.py         # Phase 3 — preprocessing
-│   └── client_simulation.py  # Phase 4 — client data partitioning
+│   ├── client_simulation.py  # Phase 4 — client data partitioning
+│   └── model.py               # Phase 5 — model + centralized baseline
+├── results/
+│   └── centralized_baseline.json
 ├── venv/                    # Python virtual environment (not tracked in git)
 ├── requirements.txt         # Python dependencies
 ├── .gitignore
@@ -354,7 +357,20 @@ pip install -r requirements.txt
   the binary label — verified genuinely heterogeneous clients, from 8.2% to
   98.2% attack rate, each dominated by different attack categories). Client
   assignments cached in `data/processed/client_assignment_{iid,non_iid}.npy`.
-- **Phase 5 — Model definition:** Not started.
+- **Phase 5 — Model definition:** Done. `src/model.py` implements the MLP
+  architecture and trains a **centralized (non-federated) baseline** — the
+  number all later federated results get compared against. Results on the
+  NSL-KDD test set: **accuracy 80.2%, precision 96.7%, recall 67.6%,
+  F1-score 79.5%** (train/val accuracy reached ~99.6%). The
+  accuracy/recall gap between train and test is expected, not a bug: NSL-KDD's
+  official test set (`KDDTest+`) deliberately includes attack traffic not
+  present in training, specifically to benchmark generalization to unseen
+  attacks rather than reward memorization (a documented, well-known property
+  of NSL-KDD since it was designed to fix this exact weakness in the older
+  KDD Cup 99 dataset). High precision / lower recall is the expected
+  signature of this: the model rarely raises a false alarm, but misses some
+  attack patterns it never saw during training. Metrics saved to
+  `results/centralized_baseline.json`.
 - **Phase 6 — Federated training loop (FedAvg):** Not started.
 - **Phase 7 — Evaluation:** Not started.
 - **Custom communication protocol (Objective 2):** Direction finalized —
