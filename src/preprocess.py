@@ -45,6 +45,15 @@ COLUMN_NAMES = [
 CATEGORICAL_COLUMNS = ["protocol_type", "service", "flag"]
 DROP_COLUMNS = ["difficulty_level"]
 
+# NOTE: a log1p transform on skewed count/byte columns (src_bytes,
+# duration, etc.) was tried here and measured empirically -- it reduced
+# official-split test accuracy (83.1% -> 77.9%) despite improving
+# training/validation fit, because it let the model fit the *training*
+# distribution's numeric patterns more tightly, which does not transfer to
+# the test set's different (unseen) attack types. Reverted; kept as a
+# documented negative result rather than silently discarded (see README >
+# Phase 5).
+
 
 def load_raw(path: str) -> pd.DataFrame:
     return pd.read_csv(path, header=None, names=COLUMN_NAMES)

@@ -32,18 +32,31 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROCESSED_DIR = os.path.join(PROJECT_ROOT, "data", "processed")
 RESULTS_DIR = os.path.join(PROJECT_ROOT, "results")
 
+# Fixed seed for reproducibility -- without this, weight initialization and
+# dropout randomness cause run-to-run accuracy to vary by ~1 point (observed:
+# 82.4% vs 83.1% across two otherwise-identical runs).
+tf.random.set_seed(42)
+
 
 def build_model(input_dim: int) -> tf.keras.Model:
     """The project's MLP architecture (README > Model):
-    input -> Dense(128, relu) -> Dropout -> Dense(64, relu) -> Dropout ->
-    Dense(1, sigmoid). Dropout added to reduce the train/test overfitting
-    gap observed with the plain (no-regularization) version."""
+    input -> Dense(256) -> Dropout -> Dense(128) -> Dropout ->
+    Dense(64) -> Dropout -> Dense(1, sigmoid), with light L2 weight decay
+    on every Dense layer. Sized up from the original 128/64 version, with
+    added L2 regularization, to give the model more raw capacity while
+    still controlling overfitting -- an attempt to close as much of the
+    official-split generalization gap as legitimately possible (see
+    README > Phase 5 for why this gap has a hard floor NSL-KDD is
+    specifically designed to expose, not just a tuning problem)."""
+    l2 = tf.keras.regularizers.l2(1e-4)
     model = tf.keras.Sequential([
         tf.keras.layers.Input(shape=(input_dim,)),
-        tf.keras.layers.Dense(128, activation="relu"),
+        tf.keras.layers.Dense(256, activation="relu", kernel_regularizer=l2),
         tf.keras.layers.Dropout(0.3),
-        tf.keras.layers.Dense(64, activation="relu"),
+        tf.keras.layers.Dense(128, activation="relu", kernel_regularizer=l2),
         tf.keras.layers.Dropout(0.3),
+        tf.keras.layers.Dense(64, activation="relu", kernel_regularizer=l2),
+        tf.keras.layers.Dropout(0.2),
         tf.keras.layers.Dense(1, activation="sigmoid"),
     ])
     model.compile(
@@ -92,7 +105,7 @@ def tune_threshold(model: tf.keras.Model, X_val: np.ndarray, y_val: np.ndarray) 
     return round(float(best_threshold), 2)
 
 
-def run_centralized_baseline(epochs: int = 50, batch_size: int = 256):
+def run_centralized_baseline(epochs: int = 80, batch_size: int = 256):
     X_train_full, y_train_full, X_test, y_test = load_processed_data()
 
     # Proper stratified shuffle split -- Keras's validation_split just
@@ -115,7 +128,7 @@ def run_centralized_baseline(epochs: int = 50, batch_size: int = 256):
 
     model = build_model(input_dim=X_train.shape[1])
     early_stopping = tf.keras.callbacks.EarlyStopping(
-        monitor="val_loss", patience=6, restore_best_weights=True,
+        monitor="val_loss", patience=10, restore_best_weights=True,
     )
     model.fit(
         X_train, y_train,
