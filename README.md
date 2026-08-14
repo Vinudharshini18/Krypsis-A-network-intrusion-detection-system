@@ -317,12 +317,14 @@ fl-nids-project/
 │   └── processed/           # Preprocessed arrays (not tracked in git;
 │                             # regenerate via src/preprocess.py)
 ├── src/
-│   ├── preprocess.py           # Phase 3 — preprocessing
-│   ├── client_simulation.py    # Phase 4 — client data partitioning
-│   ├── model.py                 # Phase 5 — model + centralized baseline
-│   └── federated_training.py    # Phase 6 — FedAvg training loop
+│   ├── preprocess.py             # Phase 3 — preprocessing
+│   ├── client_simulation.py      # Phase 4 — client data partitioning
+│   ├── model.py                   # Phase 5 — model + centralized baseline
+│   ├── federated_training.py      # Phase 6 — FedAvg training loop
+│   └── indistribution_check.py    # Supplementary diagnostic (see Phase 5)
 ├── results/
-│   ├── centralized_baseline.json  # Phase 5 results
+│   ├── centralized_baseline.json  # Phase 5 results (official split)
+│   ├── indistribution_check.json  # Phase 5 supplementary diagnostic
 │   ├── federated_iid.json         # Phase 6 results, IID split
 │   └── federated_non_iid.json     # Phase 6 results, non-IID split
 ├── venv/                    # Python virtual environment (not tracked in git)
@@ -361,35 +363,44 @@ pip install -r requirements.txt
   98.2% attack rate, each dominated by different attack categories). Client
   assignments cached in `data/processed/client_assignment_{iid,non_iid}.npy`.
 - **Phase 5 — Model definition:** Done. `src/model.py` implements the MLP
-  architecture and trains a **centralized (non-federated) baseline** — the
-  number all later federated results get compared against. Results on the
-  NSL-KDD test set: **accuracy 80.2%, precision 96.7%, recall 67.6%,
-  F1-score 79.5%** (train/val accuracy reached ~99.6%). The
-  accuracy/recall gap between train and test is expected, not a bug: NSL-KDD's
-  official test set (`KDDTest+`) deliberately includes attack traffic not
-  present in training, specifically to benchmark generalization to unseen
-  attacks rather than reward memorization (a documented, well-known property
-  of NSL-KDD since it was designed to fix this exact weakness in the older
-  KDD Cup 99 dataset). High precision / lower recall is the expected
-  signature of this: the model rarely raises a false alarm, but misses some
-  attack patterns it never saw during training. Metrics saved to
+  architecture (now with Dropout(0.3) regularization, a proper stratified
+  train/validation split, class weighting, early stopping, and a decision
+  threshold tuned on the validation set only) and trains a **centralized
+  (non-federated) baseline** — the number all later federated results get
+  compared against. Results on the official NSL-KDD test set: **accuracy
+  81.7%, precision 96.1%, recall 70.7%, F1-score 81.5%** (tuned threshold
+  0.36; val accuracy reached ~99.6%). Metrics saved to
   `results/centralized_baseline.json`.
+
+  **On the ~80% ceiling and why it's not a bug:** the official test set
+  (`KDDTest+`) deliberately includes attack traffic *absent from training*,
+  specifically to benchmark generalization to unseen attacks rather than
+  reward memorization — a documented, well-known property of NSL-KDD (it's
+  the exact weakness NSL-KDD was created to fix in the older KDD Cup 99
+  dataset). To confirm this rather than just assert it,
+  `src/indistribution_check.py` re-splits the pooled train+test data so
+  every attack type appears in both halves — an easier, "in-distribution"
+  protocol, clearly NOT used for any other result in this project — and
+  gets **99.0% accuracy, 98.9% precision, 99.1% recall**. This confirms the
+  model itself is not the bottleneck: the gap under the official split is
+  entirely the generalization-to-unseen-attacks challenge NSL-KDD is
+  designed to expose, not a modeling deficiency. (Reported here in the
+  spirit of the project's methodological-honesty commitment — see
+  Evaluation Plan — rather than only reporting whichever number is
+  higher.) Saved to `results/indistribution_check.json`.
 - **Phase 6 — Federated training loop (FedAvg):** Done.
   `src/federated_training.py` runs standard, sample-size-weighted FedAvg
   (5 clients, 15 rounds, 2 local epochs/round) on both client splits from
-  Phase 4, logging per-round test-set metrics. Results:
-  - **IID split:** converged to **79.5% accuracy** (precision 95.1%,
-    recall 67.5%, F1 79.0%) — within **0.7 points** of the centralized
-    baseline (80.2%), i.e. federated training loses almost nothing versus
+  Phase 4, logging per-round test-set metrics on the official split. Results:
+  - **IID split:** converged to **79.8% accuracy** (precision 96.5%,
+    recall 67.0%, F1 79.1%) — within **1.8 points** of the centralized
+    baseline (81.7%), i.e. federated training loses very little versus
     non-private training, as expected for an IID split.
-  - **Non-IID split:** converged to **80.8% accuracy** (precision 95.4%,
-    recall 69.7%, F1 80.6%) — essentially matching, slightly exceeding,
-    the centralized baseline. Reported plainly rather than overclaiming: a
-    small positive gap like this is plausible (FedAvg can have a mild
-    ensembling/regularization effect) but is not evidence federated
-    training is "better than centralized" in general.
+  - **Non-IID split:** converged to **80.7% accuracy** (precision 96.6%,
+    recall 68.6%, F1 80.2%) — within **1.0 point** of the centralized
+    baseline, despite genuinely heterogeneous clients.
 
-  Both runs confirm Objective 1: the shared model reaches centralized-level
+  Both runs confirm Objective 1: the shared model reaches near-centralized
   performance without any client's raw data leaving that client. Per-round
   metrics saved to `results/federated_{iid,non_iid}.json`.
 - **Phase 7 — Evaluation:** Partially done via Phase 6 (accuracy/precision/
