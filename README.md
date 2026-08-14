@@ -317,11 +317,14 @@ fl-nids-project/
 │   └── processed/           # Preprocessed arrays (not tracked in git;
 │                             # regenerate via src/preprocess.py)
 ├── src/
-│   ├── preprocess.py         # Phase 3 — preprocessing
-│   ├── client_simulation.py  # Phase 4 — client data partitioning
-│   └── model.py               # Phase 5 — model + centralized baseline
+│   ├── preprocess.py           # Phase 3 — preprocessing
+│   ├── client_simulation.py    # Phase 4 — client data partitioning
+│   ├── model.py                 # Phase 5 — model + centralized baseline
+│   └── federated_training.py    # Phase 6 — FedAvg training loop
 ├── results/
-│   └── centralized_baseline.json
+│   ├── centralized_baseline.json  # Phase 5 results
+│   ├── federated_iid.json         # Phase 6 results, IID split
+│   └── federated_non_iid.json     # Phase 6 results, non-IID split
 ├── venv/                    # Python virtual environment (not tracked in git)
 ├── requirements.txt         # Python dependencies
 ├── .gitignore
@@ -371,8 +374,27 @@ pip install -r requirements.txt
   signature of this: the model rarely raises a false alarm, but misses some
   attack patterns it never saw during training. Metrics saved to
   `results/centralized_baseline.json`.
-- **Phase 6 — Federated training loop (FedAvg):** Not started.
-- **Phase 7 — Evaluation:** Not started.
+- **Phase 6 — Federated training loop (FedAvg):** Done.
+  `src/federated_training.py` runs standard, sample-size-weighted FedAvg
+  (5 clients, 15 rounds, 2 local epochs/round) on both client splits from
+  Phase 4, logging per-round test-set metrics. Results:
+  - **IID split:** converged to **79.5% accuracy** (precision 95.1%,
+    recall 67.5%, F1 79.0%) — within **0.7 points** of the centralized
+    baseline (80.2%), i.e. federated training loses almost nothing versus
+    non-private training, as expected for an IID split.
+  - **Non-IID split:** converged to **80.8% accuracy** (precision 95.4%,
+    recall 69.7%, F1 80.6%) — essentially matching, slightly exceeding,
+    the centralized baseline. Reported plainly rather than overclaiming: a
+    small positive gap like this is plausible (FedAvg can have a mild
+    ensembling/regularization effect) but is not evidence federated
+    training is "better than centralized" in general.
+
+  Both runs confirm Objective 1: the shared model reaches centralized-level
+  performance without any client's raw data leaving that client. Per-round
+  metrics saved to `results/federated_{iid,non_iid}.json`.
+- **Phase 7 — Evaluation:** Partially done via Phase 6 (accuracy/precision/
+  recall/F1 + convergence-vs-round logged for both splits). Remaining:
+  formal write-up/plots for the report.
 - **Custom communication protocol (Objective 2):** Direction finalized —
   security-fused protocol (integrity + anomaly fingerprinting at the
   transport layer). Implementation planned after the baseline federated
