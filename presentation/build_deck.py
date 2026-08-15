@@ -278,9 +278,9 @@ def slide_status(prs):
               "What's done, and the real numbers", size=34, bold=True, font=FONT_DISPLAY)
 
     stats = [
-        ("83.7%", "Centralized baseline accuracy", GOOD),
-        ("80.4%", "Federated accuracy, IID clients", ACCENT),
-        ("79.0%", "Federated accuracy, non-IID clients", ACCENT),
+        ("83.3%", "Centralized baseline accuracy", GOOD),
+        ("80.2%", "Federated accuracy, IID clients", ACCENT),
+        ("79.1%", "Federated accuracy, non-IID clients", ACCENT),
         ("99.0%", "In-distribution diagnostic", GOOD),
     ]
     col_w, gap = Inches(2.85), Inches(0.15)

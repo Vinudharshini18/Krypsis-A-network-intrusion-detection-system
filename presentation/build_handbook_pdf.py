@@ -273,11 +273,11 @@ def build():
            "for images.")]),
 
         ("5", "Status &amp; Results", "What's done, and the real numbers",
-         "On screen: 4 result stats (83.7% / 80.4% / 79.0% / 99.0%) &middot; phase completion table, "
+         "On screen: 4 result stats (83.3% / 80.2% / 79.1% / 99.0%) &middot; phase completion table, "
          "phases 1-6 done, phase 7 in progress.",
          ["“Our centralized baseline — training normally, on all the data at once — reaches "
-          "83.7% accuracy. Training the same model federated, with data never leaving each client, "
-          "reaches 80.4% on evenly split clients and 79.0% on the harder, realistic unevenly split "
+          "83.3% accuracy. Training the same model federated, with data never leaving each client, "
+          "reaches 80.2% on evenly split clients and 79.1% on the harder, realistic unevenly split "
           "clients. That's within a few points of centralized training, which is the core proof point: "
           "we're not paying a heavy accuracy cost for keeping data private.",
           "One more honest number: on an easier evaluation where every attack type is seen during "

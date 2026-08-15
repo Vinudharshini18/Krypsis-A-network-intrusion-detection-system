@@ -20,6 +20,7 @@ Run: venv\\Scripts\\python.exe src\\model.py
 
 import json
 import os
+import random
 
 import numpy as np
 import tensorflow as tf
@@ -32,10 +33,19 @@ PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PROCESSED_DIR = os.path.join(PROJECT_ROOT, "data", "processed")
 RESULTS_DIR = os.path.join(PROJECT_ROOT, "results")
 
-# Fixed seed for reproducibility -- without this, weight initialization and
-# dropout randomness cause run-to-run accuracy to vary by ~1 point (observed:
-# 82.4% vs 83.1% across two otherwise-identical runs).
-tf.random.set_seed(42)
+# Full determinism setup -- tf.random.set_seed() ALONE is not enough: Keras's
+# per-epoch data shuffling draws from NumPy/Python's random state, not
+# TensorFlow's, so without also seeding those, accuracy still drifts run to
+# run (observed: 80.6% vs 83.7% between two "identical" runs). Also forcing
+# single-threaded ops, since CPU op parallelism itself is a separate source
+# of float non-determinism independent of any seed.
+SEED = 42
+os.environ["PYTHONHASHSEED"] = str(SEED)
+random.seed(SEED)
+np.random.seed(SEED)
+tf.random.set_seed(SEED)
+tf.config.threading.set_intra_op_parallelism_threads(1)
+tf.config.threading.set_inter_op_parallelism_threads(1)
 
 
 def build_model(input_dim: int) -> tf.keras.Model:

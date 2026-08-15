@@ -366,16 +366,23 @@ pip install -r requirements.txt
   architecture (256 → 128 → 64 → 1, Dropout(0.3/0.3/0.2), L2 weight decay,
   a proper stratified train/validation split, class weighting, early
   stopping, a decision threshold tuned on the validation set only, and a
-  fixed random seed for reproducibility) and trains a **centralized
+  **fully deterministic setup** — seeding NumPy, Python's own random
+  module, and TensorFlow, plus forcing single-threaded ops, since
+  `tf.random.set_seed()` alone does not fully fix run-to-run variance
+  (Keras's data shuffling draws from NumPy's RNG, and CPU op parallelism
+  is a separate source of float non-determinism; verified by running
+  twice and getting byte-identical results) — and trains a **centralized
   (non-federated) baseline**. Final result on the official NSL-KDD test
-  set: **accuracy 83.7%, precision 96.8%, recall 73.7%, F1-score 83.7%**
-  (tuned threshold 0.4). Metrics saved to `results/centralized_baseline.json`.
+  set: **accuracy 83.25%, precision 96.45%, recall 73.27%, F1-score
+  83.28%** (tuned threshold 0.5). Metrics saved to
+  `results/centralized_baseline.json`.
 
   **Tuning history (kept for transparency, not just the final number):**
   started at 80.2% (plain 128/64 MLP, no regularization) → 81.7% (added
   Dropout, threshold tuning, class weighting, proper validation split) →
-  83.7% (scaled up to 256/128/64 with L2, fixed seed). Two further ideas
-  were tried and **reverted after measuring they made things worse**:
+  ~83% (scaled up to 256/128/64 with L2; 83.25% once fully deterministic).
+  Two further ideas were tried and **reverted after measuring they made
+  things worse**:
   Batch Normalization (83.1% → 79.0%) and log-transforming skewed
   count/byte columns (→ 77.9%) — both improved training/validation fit but
   *hurt* test generalization, because they let the model fit the training
@@ -407,16 +414,16 @@ pip install -r requirements.txt
   (5 clients, 15 rounds, 2 local epochs/round) on both client splits from
   Phase 4, logging per-round test-set metrics on the official split, using
   the final Phase 5 model. Results:
-  - **IID split:** converged to **80.4% accuracy** (precision 96.6%,
-    recall 67.9%, F1 79.8%) — **3.3 points** below the centralized
-    baseline (83.7%).
-  - **Non-IID split:** converged to **79.0% accuracy** (precision 96.9%,
-    recall 65.3%, F1 78.0%) — **4.6 points** below the centralized
+  - **IID split:** converged to **80.24% accuracy** (precision 96.66%,
+    recall 67.63%, F1 79.58%) — **3.0 points** below the centralized
+    baseline (83.25%).
+  - **Non-IID split:** converged to **79.10% accuracy** (precision 94.70%,
+    recall 67.04%, F1 78.51%) — **4.2 points** below the centralized
     baseline.
 
   **Note on the wider gap vs. earlier runs:** with the smaller 128/64
   model, the centralized-vs-federated gap was only 0.7-1.8 points; with
-  the larger 256/128/64 model it widened to 3.3-4.6 points. This is a
+  the larger 256/128/64 model it widened to 3.0-4.2 points. This is a
   real, documented FL phenomenon, not a regression: a higher-capacity
   model helps a single centralized run (trained on all data at once) more
   than it helps federated averaging, because each client now trains far
