@@ -150,7 +150,7 @@ def title_slide(prs):
               "Federated Learning–based Network Intrusion Detection with a\nCustom Communication Protocol",
               size=20, color=INK_SOFT)
     add_text(slide, Inches(0.8), Inches(6.3), Inches(11.5), Inches(0.9),
-              "Rithika K · CB.SC.U4AIE25126      Pradhanya S · CB.SC.U4AIE25148\n"
+              "Rithika K · CB.SC.U4AIE25126      Pradhaniya S · CB.SC.U4AIE25148\n"
               "Sathya K · CB.SC.U4AIE25154      Vinudharshini PP · CB.SC.U4AIE25161",
               size=12, color=INK_SOFT)
 
@@ -234,16 +234,6 @@ def slide_tools(prs):
                   name, size=16, bold=True)
         add_text(slide, x + Inches(0.2), y + Inches(0.62), col_w - Inches(0.4), Inches(0.45),
                   role, size=11, color=INK_SOFT)
-
-    note_y = Inches(5.35)
-    add_card(slide, Inches(0.7), note_y, Inches(11.9), Inches(1.4), bg=WARM_SOFT, line=WARM)
-    add_text(slide, Inches(1.0), note_y + Inches(0.15), Inches(0.5), Inches(0.5), "01", size=12, color=WARM, bold=True)
-    add_text(slide, Inches(1.0), note_y + Inches(0.15), Inches(11.3), Inches(0.35),
-              "FORWARD LINK TO UNIT 3", size=12, bold=True, color=WARM)
-    add_text(slide, Inches(1.0), note_y + Inches(0.55), Inches(11.3), Inches(0.75),
-              "A natural next step is running the custom protocol over an actual simulated network topology in "
-              "Mininet, using OpenFlow to control switch behavior — directly extending this project into the SDN material from Unit 3.",
-              size=12, color=INK)
 
 
 def slide_methodology(prs):

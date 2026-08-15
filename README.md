@@ -8,7 +8,7 @@ communication protocol.
 | S. No. | Name | Roll No. / Reg. No. |
 |---|---|---|
 | 1 | RITHIKA K | CB.SC.U4AIE25126 |
-| 2 | PRADHANYA S | CB.SC.U4AIE25148 |
+| 2 | PRADHANIYA S | CB.SC.U4AIE25148 |
 | 3 | SATHYA K | CB.SC.U4AIE25154 |
 | 4 | VINUDHARSHINI PP | CB.SC.U4AIE25161 |
 
