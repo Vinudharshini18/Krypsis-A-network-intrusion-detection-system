@@ -151,7 +151,7 @@ def title_slide(prs):
               size=20, color=INK_SOFT)
     add_text(slide, Inches(0.8), Inches(6.3), Inches(11.5), Inches(0.9),
               "Rithika K · CB.SC.U4AIE25126      Pradhanya S · CB.SC.U4AIE25148\n"
-              "Sathya K · CB.SC.U4AIE25154      Venudharshini P P · CB.SC.U4AIE25161",
+              "Sathya K · CB.SC.U4AIE25154      Vinudharshini PP · CB.SC.U4AIE25161",
               size=12, color=INK_SOFT)
 
 
