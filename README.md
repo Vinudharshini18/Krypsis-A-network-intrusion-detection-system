@@ -383,12 +383,18 @@ pip install -r requirements.txt
   ~83% (scaled up to 256/128/64 with L2; 83.25% once fully deterministic).
   Two further ideas were tried and **reverted after measuring they made
   things worse**:
-  Batch Normalization (83.1% → 79.0%) and log-transforming skewed
-  count/byte columns (→ 77.9%) — both improved training/validation fit but
-  *hurt* test generalization, because they let the model fit the training
-  distribution's specific patterns more tightly, which doesn't transfer to
-  the test set's unseen attack types. Documented here rather than silently
-  discarded.
+  Batch Normalization (83.1% → 79.0%), log-transforming skewed count/byte
+  columns (→ 77.9%), and bucketing rare "service" categories — fewer than
+  20 training occurrences, e.g. "aol", "http_2784" — into a single
+  "rare_service" value (83.25% → 81.98%). The first two improved
+  training/validation fit but *hurt* test generalization, because they let
+  the model fit the training distribution's specific patterns more
+  tightly, which doesn't transfer to the test set's unseen attack types.
+  The third is a different, more counterintuitive failure: those rare
+  service categories turned out to carry real signal (an unusual service
+  is itself often suspicious), so collapsing them for "noise reduction"
+  actually discarded useful information. Documented here rather than
+  silently discarded.
 
   **On the ~80-84% ceiling and why it's not a bug:** the official test set
   (`KDDTest+`) deliberately includes attack traffic *absent from training*,

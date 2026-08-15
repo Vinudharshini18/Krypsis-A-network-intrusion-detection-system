@@ -45,6 +45,13 @@ COLUMN_NAMES = [
 CATEGORICAL_COLUMNS = ["protocol_type", "service", "flag"]
 DROP_COLUMNS = ["difficulty_level"]
 
+# NOTE: bucketing rare "service" categories (< 20 training occurrences) into
+# a single "rare_service" value was tried and measured -- it REDUCED
+# official-split accuracy (83.25% -> 81.98%). Counterintuitively, those rare
+# categories carry real signal (an unusual service is itself often
+# suspicious), so collapsing them lost information rather than removing
+# noise. Reverted; kept as a documented negative result (see README > Phase 5).
+
 # NOTE: a log1p transform on skewed count/byte columns (src_bytes,
 # duration, etc.) was tried here and measured empirically -- it reduced
 # official-split test accuracy (83.1% -> 77.9%) despite improving
