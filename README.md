@@ -42,8 +42,8 @@ fingerprint before committing to expensive aggregation, allowing tampered,
 corrupted, or blatantly poisoned updates to be rejected early and cheaply,
 rather than only being caught (or missed) by post-hoc robust aggregation
 methods (e.g., Krum, trimmed mean). The resulting system is evaluated on
-standard intrusion detection datasets (e.g., NSL-KDD / CICIDS2017) across
-multiple simulated clients, measuring detection accuracy, communication
+the FLNET2023 intrusion detection dataset, whose traffic was captured at 10
+separate routers that serve directly as the federated clients, measuring detection accuracy, communication
 overhead, poisoning-attack detection/false-positive rates, and convergence
 speed compared to centralized and standard federated baselines.
 
@@ -219,10 +219,10 @@ must fully work end-to-end, and **stretch goals** added only once the core is
 solid.
 
 **Core (must have, in build order):**
-1. NSL-KDD preprocessing
-2. Multiple simulated clients — **IID split first** (get the pipeline
-   working), then a **non-IID split** (required, not optional — the research
-   question depends on it)
+1. FLNET2023 download + preprocessing
+2. Federated clients — the **real per-router split** (FLNET2023's 10
+   routers = 10 clients; naturally non-IID, and the research question
+   depends on it), plus an **IID control split** of the same data
 3. MLP model
 4. FedAvg training loop, evaluated against a centralized baseline
 5. Custom protocol: integrity tag + fingerprint, wired into the training loop
@@ -243,9 +243,12 @@ solid.
 - Distribution-shift stress test: a client's traffic profile drifts mid-
   training (e.g., a previously unseen attack type appears), comparing how
   global vs. Mondrian thresholds degrade
-- **CICIDS2017 as a replication study** — explicitly framed as testing
-  whether the global-vs-Mondrian effect holds in an independent dataset, not
-  just "more data"
+- **Multi-class attack-type classification** — the binary task is close
+  to saturated on FLNET2023 (see Progress Log > Phase 5), so a per-attack-type
+  model is the natural next step and makes client heterogeneity matter more
+- **NSL-KDD / CICIDS2017 as a replication study** — testing whether the
+  global-vs-Mondrian effect holds on a dataset where client heterogeneity has
+  to be simulated
 - Scalability experiments (more simulated clients)
 
 The single most important thing for the final grade is a **working,
@@ -275,183 +278,190 @@ Evaluation is deliberately multi-axis, not just accuracy:
 - **Distribution shift (stretch):** how detection/false-positive rates
   change when a client's traffic profile drifts mid-training.
 
-**Methodological honesty note:** client heterogeneity (non-IID splits) is
-*simulated* by partitioning a single-source dataset (NSL-KDD / CICIDS2017)
-unevenly across clients — it does not represent real multi-organization
-deployment data. This is stated explicitly rather than implied, consistent
-with how datasets and their limitations should be reported.
+**Methodological note:** client heterogeneity comes from FLNET2023's own
+per-router captures, not from an artificial partition. The network itself is
+*emulated* (CORE emulator, scripted normal traffic and attack tools), not a
+production network, and that shows up as unusually easy class separation
+(see Progress Log > Phase 5). This is stated explicitly rather than implied.
 
 ## Model
 
 - **Architecture:** Multi-Layer Perceptron (MLP) — feedforward neural network
-  (input layer sized to the encoded feature count → hidden layer, 128 neurons,
-  ReLU → hidden layer, 64 neurons, ReLU → output layer, 1 neuron, sigmoid).
+  (66 input features → Dense 256 → Dense 128 → Dense 64 (ReLU, with Dropout
+  and L2) → output layer, 1 neuron, sigmoid).
 - **Task:** Binary classification (`normal` vs `attack`) as the first
   milestone; multi-class attack-type classification as a later extension.
-- **Why an MLP:** the dataset is tabular (rows of numeric/categorical
-  connection features), not image or sequence data, so a simple feedforward
+- **Why an MLP:** the dataset is tabular (rows of numeric flow features), not image or sequence data, so a simple feedforward
   network is the standard, well-supported choice for this task and averages
   cleanly under FedAvg.
 
 ## Dataset
 
-- **NSL-KDD** — an improved version of the classic KDD Cup 99 intrusion
-  detection benchmark, 41 features per network connection record + label.
-- Source: [UNB Canadian Institute for Cybersecurity](https://www.unb.ca/cic/datasets/nsl.html)
-  (official reference; direct download currently unavailable at time of
-  writing). Files were obtained via the
-  [jmnwong/NSL-KDD-Dataset](https://github.com/jmnwong/NSL-KDD-Dataset) GitHub
-  mirror.
-- Files used: `data/KDDTrain+.txt` (training set, ~125,973 rows),
-  `data/KDDTest+.txt` (test set, ~22,544 rows).
-- **CICIDS2017** planned as a second benchmark dataset for Objective 3 (not
-  yet downloaded).
+- **FLNET2023** — *Realistic Network Intrusion Detection Dataset for Federated
+  Learning* (Kumar, Liu, et al., MILCOM 2023). Network flows recorded at 10
+  routers (D1–D10) of a 40-node network emulated with CORE, with features
+  extracted by CICFlowMeter (83 columns per flow).
+- Traffic types: Normal; DDoS (bot, dyn, stomp, tcp); DoS (hulk, slowhttp);
+  Web (SQL injection, command injection, XSS); Infiltration (MITM).
+- Why this dataset: every training file comes from one router, so each router
+  is a natural federated client with its own, uneven mix of attacks — real
+  non-IID data instead of a simulated partition.
+- Source: [nsol-nmsu/FML-Network](https://github.com/nsol-nmsu/FML-Network)
+  (links to the authors' public SharePoint folder). Only the CSVs are used
+  (~3.2 GB, 50 files); the raw PCAPs (~136 GB) are not needed.
+- The CSVs are too large for git. Fetch them with
+  `src/download_flnet2023.py`, which saves them to `data/FLNET2023/`.
+- **Previous dataset:** the project's first phase used NSL-KDD (83.25%
+  centralized accuracy on the official split). Those files and results were
+  replaced by FLNET2023 and remain in the git history.
 
 ## Project Structure
 
 ```
-fl-nids-project/
+Krypsis-A-network-intrusion-detection-system/
 ├── data/
-│   ├── KDDTrain+.txt        # Raw dataset files
-│   ├── KDDTest+.txt
+│   ├── FLNET2023/           # Raw CSVs (not tracked in git;
+│   │                        # fetch via src/download_flnet2023.py)
 │   └── processed/           # Preprocessed arrays (not tracked in git;
-│                             # regenerate via src/preprocess.py)
+│                            # regenerate via src/preprocess.py)
 ├── src/
-│   ├── preprocess.py             # Phase 3 — preprocessing
-│   ├── client_simulation.py      # Phase 4 — client data partitioning
+│   ├── download_flnet2023.py      # Phase 2 — dataset download
+│   ├── preprocess.py              # Phase 3 — preprocessing
+│   ├── client_simulation.py       # Phase 4 — client assignment
 │   ├── model.py                   # Phase 5 — model + centralized baseline
 │   ├── federated_training.py      # Phase 6 — FedAvg training loop
-│   └── indistribution_check.py    # Supplementary diagnostic (see Phase 5)
+│   └── indistribution_check.py    # NSL-KDD-era diagnostic (see Phase 5)
 ├── results/
-│   ├── centralized_baseline.json  # Phase 5 results (official split)
-│   ├── indistribution_check.json  # Phase 5 supplementary diagnostic
-│   ├── federated_iid.json         # Phase 6 results, IID split
-│   └── federated_non_iid.json     # Phase 6 results, non-IID split
-├── venv/                    # Python virtual environment (not tracked in git)
+│   ├── centralized_baseline.json  # Phase 5 results (official TEST split)
+│   ├── federated_router.json      # Phase 6 results, per-router split
+│   └── federated_iid.json         # Phase 6 results, IID control split
+├── presentation/            # Slides + handbook (still describe NSL-KDD phase)
 ├── requirements.txt         # Python dependencies
 ├── .gitignore
-└── README.md                 # This file
+└── README.md                # This file
 ```
 
 ## Setup
+
+Requires **Python 3.10–3.13** (TensorFlow has no Python 3.14 build yet).
 
 ```
 python -m venv venv
 venv\Scripts\activate          # Windows
 pip install -r requirements.txt
+python src\download_flnet2023.py    # ~3.2 GB, resumable
+python src\preprocess.py
+python src\client_simulation.py
+python src\model.py
+python src\federated_training.py
 ```
 
 ## Progress Log
 
-- **Phase 1 — Environment setup:** Done. Project folder created, virtual
-  environment created, `requirements.txt` defined.
-- **Phase 2 — Dataset acquisition:** Done. NSL-KDD train/test files downloaded
-  into `data/`.
-- **Phase 3 — Preprocessing:** Done. `src/preprocess.py` loads
-  `KDDTrain+.txt` / `KDDTest+.txt`, one-hot encodes categorical columns
-  (fit on train only), scales numeric columns to [0, 1] (fit on train
-  only), and builds a binary (`normal` vs `attack`) label — 122 final
-  features, 125,973 train / 22,544 test rows. Output cached in
-  `data/processed/` (not tracked in git; regenerate by re-running the
-  script).
-- **Phase 4 — Client simulation (data partitioning):** Done.
-  `src/client_simulation.py` implements both splits across 5 simulated
-  clients: an **IID split** (random even shuffle — verified near-identical
-  ~46-47% attack rate per client) and a **non-IID split** (Dirichlet
-  partition, alpha=0.5, over the original attack-type categories, not just
-  the binary label — verified genuinely heterogeneous clients, from 8.2% to
-  98.2% attack rate, each dominated by different attack categories). Client
-  assignments cached in `data/processed/client_assignment_{iid,non_iid}.npy`.
-- **Phase 5 — Model definition:** Done. `src/model.py` implements the MLP
-  architecture (256 → 128 → 64 → 1, Dropout(0.3/0.3/0.2), L2 weight decay,
-  a proper stratified train/validation split, class weighting, early
-  stopping, a decision threshold tuned on the validation set only, and a
-  **fully deterministic setup** — seeding NumPy, Python's own random
-  module, and TensorFlow, plus forcing single-threaded ops, since
-  `tf.random.set_seed()` alone does not fully fix run-to-run variance
-  (Keras's data shuffling draws from NumPy's RNG, and CPU op parallelism
-  is a separate source of float non-determinism; verified by running
-  twice and getting byte-identical results) — and trains a **centralized
-  (non-federated) baseline**. Final result on the official NSL-KDD test
-  set: **accuracy 83.25%, precision 96.45%, recall 73.27%, F1-score
-  83.28%** (tuned threshold 0.5). Metrics saved to
+- **Phase 1 — Environment setup:** Done. Project folder, virtual
+  environment (Python 3.13 — TensorFlow has no 3.14 build yet),
+  `requirements.txt`.
+- **Dataset switch — NSL-KDD → FLNET2023:** The first version of this
+  project was built and evaluated on NSL-KDD (centralized baseline 83.25%;
+  FedAvg 80.24% IID / 79.10% simulated non-IID). NSL-KDD has no notion of
+  clients, so its non-IID split had to be simulated with a Dirichlet
+  partition. FLNET2023 was recorded at 10 separate routers, so it provides
+  real, naturally non-IID clients — the setting the research question is
+  about. The NSL-KDD code, data and results remain in the git history.
+- **Phase 2 — Dataset acquisition:** Done. `src/download_flnet2023.py`
+  fetches the 50 FLNET2023 CSVs (3.19 GB) from the authors' public
+  SharePoint folder into `data/FLNET2023/` (resumable, 4 parallel
+  downloads; not tracked in git).
+- **Phase 3 — Preprocessing:** Done. `src/preprocess.py`:
+  - Every training file is tagged with its router number (from
+    `Dataset-<router>...csv`); the dataset's separate `TEST/` capture is the
+    test set.
+  - **Subsampling:** each file is uniformly subsampled to 10% (minimum
+    2,000 rows, or the whole file if smaller) — the full data is ~4.8M flows,
+    too many for 10 clients × 15 rounds of training on a laptop. Relative
+    file sizes, and so each router's class imbalance, are preserved.
+  - **Dropped identifier columns:** `src_ip`, `dst_ip`, `src_port`,
+    `timestamp` — attackers use fixed addresses in the emulation, so these
+    would let the model memorise *who/when* instead of *what the traffic
+    looks like*. `dst_port` is kept (the equivalent of NSL-KDD's `service`).
+  - 12 columns that are constant in the training data (TCP flag counts,
+    `protocol`) are dropped; no rows had inf/NaN values after sampling.
+  - Features are signed-log1p transformed then min-max scaled (fit on train
+    only) — flow features span many orders of magnitude.
+  - Result: **66 features, 564,007 training flows (65.9% attack), 79,491
+    test flows (76.1% attack)**, binary label (`Normal` vs any attack).
+    Output cached in `data/processed/` (not tracked in git).
+- **Phase 4 — Client assignment:** Done. `src/client_simulation.py`
+  builds two splits of the same training rows:
+  - **Router split (the real one):** router *k* = client *k−1*. Clients are
+    genuinely heterogeneous: sizes from 23.5k to 141.7k flows, attack share
+    from **19.0% to 92.1%**, and different attacks at different routers —
+    e.g. only router 1 sees DDoS-bot, only router 10 sees the DDoS-tcp
+    flood, router 3 has no DoS-hulk or DDoS at all, and SQL injection
+    appears only at routers 3 and 4.
+  - **IID split (control):** the same rows shuffled evenly over 10 clients
+    (every client ~56.4k flows, 65.6–66.3% attack).
+- **Phase 5 — Model + centralized baseline:** Done. `src/model.py`, same
+  MLP as the NSL-KDD phase (256 → 128 → 64 → 1, Dropout, L2, class
+  weighting, early stopping, validation-tuned threshold, fully
+  deterministic). Result on the FLNET2023 `TEST` capture: **accuracy
+  100.00%, precision 100.00%, recall 100.00%, F1 100.00%** — zero errors
+  on 79,491 flows (early-stopped after 51 epochs). Saved to
   `results/centralized_baseline.json`.
 
-  **Tuning history (kept for transparency, not just the final number):**
-  started at 80.2% (plain 128/64 MLP, no regularization) → 81.7% (added
-  Dropout, threshold tuning, class weighting, proper validation split) →
-  ~83% (scaled up to 256/128/64 with L2; 83.25% once fully deterministic).
-  Two further ideas were tried and **reverted after measuring they made
-  things worse**:
-  Batch Normalization (83.1% → 79.0%), log-transforming skewed count/byte
-  columns (→ 77.9%), and bucketing rare "service" categories — fewer than
-  20 training occurrences, e.g. "aol", "http_2784" — into a single
-  "rare_service" value (83.25% → 81.98%). The first two improved
-  training/validation fit but *hurt* test generalization, because they let
-  the model fit the training distribution's specific patterns more
-  tightly, which doesn't transfer to the test set's unseen attack types.
-  The third is a different, more counterintuitive failure: those rare
-  service categories turned out to carry real signal (an unusual service
-  is itself often suspicious), so collapsing them for "noise reduction"
-  actually discarded useful information. Documented here rather than
-  silently discarded.
+  **Why a perfect score, and why it is not a bug:** a perfect result was
+  checked rather than trusted.
+  - Identifier columns (IPs, source port, timestamp) are already removed,
+    and `dst_port` is not among the strongest features.
+  - The classes are simply very easy to separate in this emulated network:
+    a **single threshold on one feature** (`tot_fwd_pkts`, forward packet
+    count) already scores **97.5%** on the test set, a depth-2 decision tree
+    **99.2%**, and a depth-3 tree **99.99%**.
+  - 8,551 of the 79,491 test flows (10.8%) are byte-for-byte identical to a
+    training flow after preprocessing (short, repetitive attack flows).
 
-  **On the ~80-84% ceiling and why it's not a bug:** the official test set
-  (`KDDTest+`) deliberately includes attack traffic *absent from training*,
-  specifically to benchmark generalization to unseen attacks rather than
-  reward memorization — a documented, well-known property of NSL-KDD (it's
-  the exact weakness NSL-KDD was created to fix in the older KDD Cup 99
-  dataset). To confirm this rather than just assert it,
-  `src/indistribution_check.py` re-splits the pooled train+test data so
-  every attack type appears in both halves — an easier, "in-distribution"
-  protocol, clearly NOT used for any other result in this project — and
-  gets **99.0% accuracy, 98.9% precision, 99.1% recall**. This confirms the
-  model itself is not the bottleneck: the gap under the official split is
-  entirely the generalization-to-unseen-attacks challenge NSL-KDD is
-  designed to expose, not a modeling deficiency. A second dataset
-  (CICIDS2017) would likely score 90%+ under the standard random-split
-  protocol most papers use for it, but that's evaluating a different,
-  easier question (interpolation, not generalization) — kept as a Stretch
-  goal rather than pursued now, to protect time for the Core scope (the
-  custom protocol) that the project's novelty claim depends on. Saved to
-  `results/indistribution_check.json`.
+  So binary normal-vs-attack detection is essentially saturated on
+  FLNET2023: the emulated normal traffic and the attack tools produce very
+  different flows. This is a property of the dataset (emulated with CORE,
+  scripted traffic), stated plainly. It shifts where this dataset is
+  useful: not for comparing detection accuracy, but for the
+  project's actual research question — non-IID clients and poisoned-update
+  filtering — where the per-router heterogeneity is what matters. A
+  multi-class (per-attack-type) model is added as a stretch goal because
+  it is not saturated in the same way.
+
+  `src/indistribution_check.py` (pooled random re-split) was the NSL-KDD
+  diagnostic for the unseen-attack gap; with the official split already at
+  100% it has nothing to show on FLNET2023 and was not re-run.
 - **Phase 6 — Federated training loop (FedAvg):** Done.
-  `src/federated_training.py` runs standard, sample-size-weighted FedAvg
-  (5 clients, 15 rounds, 2 local epochs/round) on both client splits from
-  Phase 4, logging per-round test-set metrics on the official split, using
-  the final Phase 5 model. Results:
-  - **IID split:** converged to **80.24% accuracy** (precision 96.66%,
-    recall 67.63%, F1 79.58%) — **3.0 points** below the centralized
-    baseline (83.25%).
-  - **Non-IID split:** converged to **79.10% accuracy** (precision 94.70%,
-    recall 67.04%, F1 78.51%) — **4.2 points** below the centralized
-    baseline.
+  `src/federated_training.py`, standard sample-size-weighted FedAvg, 10
+  clients, 15 rounds, 2 local epochs/round, evaluated on the `TEST`
+  capture every round:
+  - **Router split (real non-IID):** **99.93% accuracy** (precision 100%,
+    recall 99.91%, F1 99.95%) — 55 missed attacks, 0 false alarms; stable
+    from round 1 to 15. **0.07 points** below the centralized baseline.
+  - **IID split (control):** **99.999% accuracy** — 1 missed attack in
+    79,491 flows, from round 1 onward.
 
-  **Note on the wider gap vs. earlier runs:** with the smaller 128/64
-  model, the centralized-vs-federated gap was only 0.7-1.8 points; with
-  the larger 256/128/64 model it widened to 3.0-4.2 points. This is a
-  real, documented FL phenomenon, not a regression: a higher-capacity
-  model helps a single centralized run (trained on all data at once) more
-  than it helps federated averaging, because each client now trains far
-  more parameters on a much smaller data slice, increasing "client drift"
-  between locally trained models before they're averaged. Reported plainly
-  as a genuine finding rather than silently omitted — it's also directly
-  relevant to Objective 4 (analysing convergence/scalability behaviour).
-
-  Both runs confirm Objective 1: the shared model reaches near-centralized
-  performance without any client's raw data leaving that client. Per-round
-  metrics saved to `results/federated_{iid,non_iid}.json`.
-- **Phase 7 — Evaluation:** Partially done via Phase 6 (accuracy/precision/
-  recall/F1 + convergence-vs-round logged for both splits). Remaining:
-  formal write-up/plots for the report.
+  Even with detection saturated, the real router split is the only setting
+  that leaves errors: every one of them is a missed attack, and training
+  more rounds does not fix it. That is the non-IID effect this project
+  studies — each router has only seen some attack types, and FedAvg's
+  averaged model stays slightly weaker than training on all data together
+  — here small because the task is easy. Per-round metrics saved to
+  `results/federated_{router,iid}.json`.
+- **Phase 7 — Evaluation:** Partially done via Phase 6. Remaining: which
+  attack types the 55 router-split misses belong to, plots, and the
+  multi-class extension.
 - **Custom communication protocol (Objective 2):** Direction finalized —
   security-fused protocol (integrity + anomaly fingerprinting at the
-  transport layer). Implementation planned after the baseline federated
-  pipeline (Phases 1–7) is working end to end.
+  transport layer). Implementation is the next step, on the router split.
 - **Research question finalized:** global vs. Mondrian-style per-cluster
   fingerprint threshold calibration, testing whether non-IID honest clients
   are systematically misclassified as malicious under a global threshold.
-  Not yet implemented — depends on Phases 3–7 being done first.
+  FLNET2023's router split supplies the real non-IID clients this needs.
+- **Presentation (`presentation/`):** still describes the NSL-KDD phase;
+  to be regenerated with FLNET2023 results.
 
 ## References
 
@@ -463,6 +473,9 @@ pip install -r requirements.txt
 - Communication-Efficient Federated Learning for Network Traffic Anomaly
   Detection (eFedAD). IEEE Conference Publication.
   https://ieeexplore.ieee.org/iel8/10566866/10566894/10566998.pdf
+- Kumar, P., Liu, J., et al. (2023). FLNET2023: Realistic Network
+  Intrusion Detection Dataset for Federated Learning. *MILCOM 2023*.
+  https://doi.org/10.1109/MILCOM58377.2023.10356272
 - Reducing Communication Overhead in Federated Learning for Network Anomaly
   Detection with Adaptive Client Selection (2025). arXiv:2503.15448.
   https://arxiv.org/pdf/2503.15448

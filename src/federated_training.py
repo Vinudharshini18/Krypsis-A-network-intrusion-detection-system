@@ -14,8 +14,8 @@ Phase 5 (the MLP model): runs the standard federated-averaging loop —
     evaluate the new global model on the held-out test set
 
 and logs per-round metrics, so accuracy-vs-round can be plotted and
-compared against the centralized baseline (Phase 5) and between the IID
-and non-IID client splits (Phase 4).
+compared against the centralized baseline (Phase 5) and between the
+real per-router client split and the IID control split (Phase 4).
 
 Run: venv\\Scripts\\python.exe src\\federated_training.py
 """
@@ -57,7 +57,7 @@ def federated_average(weight_list: list, sample_counts: list) -> list:
 
 
 def run_federated_training(split: str, num_rounds: int = NUM_ROUNDS):
-    assert split in ("iid", "non_iid")
+    assert split in ("iid", "router")
 
     X_train, y_train, X_test, y_test = load_processed_data()
     assignment = load_client_assignment(split)
@@ -130,8 +130,8 @@ def compare_to_baseline(federated_history: list):
 
 
 if __name__ == "__main__":
+    router_history = run_federated_training("router")
+    compare_to_baseline(router_history)
+
     iid_history = run_federated_training("iid")
     compare_to_baseline(iid_history)
-
-    non_iid_history = run_federated_training("non_iid")
-    compare_to_baseline(non_iid_history)

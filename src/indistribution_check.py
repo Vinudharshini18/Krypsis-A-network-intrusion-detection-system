@@ -1,23 +1,23 @@
 """
 Supplementary diagnostic — NOT a replacement for the official centralized
-baseline (src/model.py) or any federated result. Those all correctly use
-the official NSL-KDD KDDTrain+/KDDTest+ split, which deliberately includes
-attack types in the test set that are absent from training, to benchmark
-generalization to unseen attacks rather than memorization.
+baseline (src/model.py) or any federated result. Those all train on the
+per-router FLNET2023 captures and evaluate on the dataset's separate TEST
+capture (a different recording session of the same attack types), which
+checks that the model generalizes across capture sessions.
 
 This script instead pools train+test together and re-splits with a plain
-stratified 80/20 split, so every attack type appears in both the training
-and evaluation portions. This isolates two different questions:
+stratified 80/20 split, so train and evaluation rows come from the same
+capture sessions. This isolates two different questions:
 
-  - Official split (src/model.py): "how well does the model generalize to
-    attack types it has never seen?" -- the harder, more meaningful
+  - Official split (src/model.py): "does the model generalize to a
+    separately recorded session of traffic?" -- the harder, more meaningful
     question, and the one used for every real result in this project.
-  - This script: "how well does the model learn the attack types it HAS
-    seen?" -- shows the model's raw learning capacity, unclamped by the
-    unseen-attack generalization gap.
+  - This script: "how well does the model fit traffic from sessions it HAS
+    seen?" -- shows the model's raw learning capacity.
 
-Reporting both, clearly labeled, is more honest than reporting only
-whichever number is higher.
+A large gap between the two would mean the model is picking up
+session-specific artefacts rather than attack behaviour. Reporting both,
+clearly labeled, is more honest than reporting only whichever is higher.
 
 Run: venv\\Scripts\\python.exe src\\indistribution_check.py
 """

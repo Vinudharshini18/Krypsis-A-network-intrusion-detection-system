@@ -1,17 +1,17 @@
 {
-  "accuracy": 0.8325053229240597,
-  "precision": 0.9645091804287619,
-  "recall": 0.7327203303981922,
-  "f1_score": 0.8327871756266053,
+  "accuracy": 1.0,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1_score": 1.0,
   "confusion_matrix": [
     [
-      9365,
-      346
+      18984,
+      0
     ],
     [
-      3430,
-      9403
+      0,
+      60507
     ]
   ],
-  "threshold": 0.5
+  "threshold": 0.1
 }

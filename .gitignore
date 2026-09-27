@@ -3,3 +3,6 @@ __pycache__/
 *.pyc
 .ipynb_checkpoints/
 data/processed/
+# FLNET2023 raw CSVs (~3.2 GB) — too large for git; fetch with
+# src/download_flnet2023.py
+data/FLNET2023/

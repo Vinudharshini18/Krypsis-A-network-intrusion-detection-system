@@ -2,8 +2,8 @@
 Phase 5 — Model definition, plus a centralized (non-federated) baseline run.
 
 Defines the MLP architecture used throughout the project (see README,
-"Model" section): a plain feedforward network sized for the 122-feature
-preprocessed NSL-KDD data, doing binary (normal vs attack) classification.
+"Model" section): a plain feedforward network sized for the preprocessed
+FLNET2023 flow features, doing binary (normal vs attack) classification.
 Includes Dropout regularization, a proper stratified train/validation split
 (not Keras's default trailing-slice validation_split, which is unsafe on
 unshuffled data), early stopping, class weighting, and decision-threshold
@@ -52,12 +52,8 @@ def build_model(input_dim: int) -> tf.keras.Model:
     """The project's MLP architecture (README > Model):
     input -> Dense(256) -> Dropout -> Dense(128) -> Dropout ->
     Dense(64) -> Dropout -> Dense(1, sigmoid), with light L2 weight decay
-    on every Dense layer. Sized up from the original 128/64 version, with
-    added L2 regularization, to give the model more raw capacity while
-    still controlling overfitting -- an attempt to close as much of the
-    official-split generalization gap as legitimately possible (see
-    README > Phase 5 for why this gap has a hard floor NSL-KDD is
-    specifically designed to expose, not just a tuning problem)."""
+    on every Dense layer. Same architecture as the project's NSL-KDD phase,
+    so results on the two datasets stay comparable."""
     l2 = tf.keras.regularizers.l2(1e-4)
     model = tf.keras.Sequential([
         tf.keras.layers.Input(shape=(input_dim,)),
@@ -119,8 +115,8 @@ def run_centralized_baseline(epochs: int = 80, batch_size: int = 256):
     X_train_full, y_train_full, X_test, y_test = load_processed_data()
 
     # Proper stratified shuffle split -- Keras's validation_split just
-    # slices the tail of the (unshuffled) array, which is not a safe
-    # validation set here.
+    # slices the tail of the array, which here is one router's last capture
+    # file, not a safe validation set.
     X_train, X_val, y_train, y_val = train_test_split(
         X_train_full, y_train_full, test_size=0.1, stratify=y_train_full,
         random_state=42,
