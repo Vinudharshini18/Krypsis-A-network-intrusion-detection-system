@@ -210,6 +210,43 @@ phrase. Threshold values, cluster count, and whether flagged updates are
 hard-rejected vs. down-weighted are tuning decisions to be made empirically
 once attack simulations (Phase: poisoning evaluation) are running.
 
+### As implemented (`src/protocol.py`)
+
+The implementation follows the spec above, with these changes — each made
+for a concrete reason found while building it:
+
+- **Wire format:** `[4-byte header length][JSON header][float32 payload]
+  [32-byte HMAC-SHA256 tag]`. The tag covers header *and* payload, with a
+  per-client pre-shared key.
+- **Fingerprint = L2 norm + per-layer L2 norms (4 Dense layers) + a
+  64-number random-projection "sketch" of `δθ`.** The spec's
+  `cos_sim(δθ, δθ_mean_this_round)` cannot be computed by a client (it
+  does not know the other clients' updates); instead the server compares
+  sketches, which preserve cosine similarity approximately. The projection
+  matrix comes from a public seed, so client and server compute the same
+  sketch.
+- **The server re-computes the fingerprint from the payload** and rejects
+  the message on mismatch — otherwise a malicious client could simply send
+  an innocent-looking fingerprint.
+- **Three scores:** norm (`|log(‖δθ‖ / round median)|`), consensus
+  (`1 − cos(sketch, coordinate-wise median sketch)`), and history
+  (`1 − cos(sketch, own previous sketch)`). Medians rather than means, so
+  the attackers cannot pull the consensus toward themselves.
+- **Scores are robust-z-standardized within each round** (median / MAD
+  across that round's clients). Without this the protocol was unusable:
+  FLNET2023 is learned within ~5 rounds, after which *every* honest update
+  is small and noisy, all raw scores drift upward, and thresholds fit on
+  the calibration rounds flagged **65–96% of honest updates**. Measured,
+  fixed, and kept here as a documented negative result.
+- **Thresholds are conformal quantiles** (`ceil((n+1)(1−α))`-th smallest
+  calibration score, α = 0.05 per score) fit on 5 clean calibration
+  rounds. Mondrian clusters: k-means (k = 3) on each client's mean
+  calibration-round sketch — no labels or raw data needed. A cluster with
+  too few calibration scores for a valid quantile falls back to the
+  global threshold.
+- **Flagged updates are dropped**, not routed to Krum / trimmed mean (still
+  a stretch goal).
+
 ## Scope
 
 This project is ambitious (FL + custom protocol + integrity + fingerprinting
@@ -330,11 +367,14 @@ Krypsis-A-network-intrusion-detection-system/
 │   ├── client_simulation.py       # Phase 4 — client assignment
 │   ├── model.py                   # Phase 5 — model + centralized baseline
 │   ├── federated_training.py      # Phase 6 — FedAvg training loop
+│   ├── protocol.py                # Phase 8 — Krypsis protocol
+│   ├── protocol_experiment.py     # Phase 8 — poisoning / tamper evaluation
 │   └── indistribution_check.py    # NSL-KDD-era diagnostic (see Phase 5)
 ├── results/
 │   ├── centralized_baseline.json  # Phase 5 results (official TEST split)
 │   ├── federated_router.json      # Phase 6 results, per-router split
-│   └── federated_iid.json         # Phase 6 results, IID control split
+│   ├── federated_iid.json         # Phase 6 results, IID control split
+│   └── protocol_experiment.json   # Phase 8 results (all 45 runs + summary)
 ├── presentation/            # Slides + handbook (still describe NSL-KDD phase)
 ├── requirements.txt         # Python dependencies
 ├── .gitignore
@@ -354,6 +394,7 @@ python src\preprocess.py
 python src\client_simulation.py
 python src\model.py
 python src\federated_training.py
+python src\protocol_experiment.py   # long: 45 federated runs
 ```
 
 ## Progress Log
@@ -450,16 +491,65 @@ python src\federated_training.py
   averaged model stays slightly weaker than training on all data together
   — here small because the task is easy. Per-round metrics saved to
   `results/federated_{router,iid}.json`.
-- **Phase 7 — Evaluation:** Partially done via Phase 6. Remaining: which
-  attack types the 55 router-split misses belong to, plots, and the
-  multi-class extension.
-- **Custom communication protocol (Objective 2):** Direction finalized —
-  security-fused protocol (integrity + anomaly fingerprinting at the
-  transport layer). Implementation is the next step, on the router split.
-- **Research question finalized:** global vs. Mondrian-style per-cluster
-  fingerprint threshold calibration, testing whether non-IID honest clients
-  are systematically misclassified as malicious under a global threshold.
-  FLNET2023's router split supplies the real non-IID clients this needs.
+- **Phase 7 — Evaluation:** Partially done via Phases 6 and 8. Remaining:
+  which attack types the 55 router-split misses belong to, and plots.
+- **Phase 8 — Custom protocol + poisoning evaluation:** Done.
+  `src/protocol.py` (the protocol, see "As implemented" above) and
+  `src/protocol_experiment.py` (the evaluation). Setup: router split, 10
+  clients, 12 rounds (5 clean calibration rounds, then 7 attack rounds),
+  **2 randomly chosen label-flipping attackers** per seed, **15 seeds**,
+  each seed run under 3 policies — no defense (plain FedAvg), protocol with
+  global thresholds, protocol with Mondrian thresholds. In every
+  post-calibration round one honest message also has a payload byte
+  flipped in transit. Results (mean ± std over 15 seeds, post-calibration
+  rounds):
+
+  | | No defense | Protocol, global | Protocol, Mondrian |
+  |---|---|---|---|
+  | Final test accuracy | 78.0% ± 23.5 | 88.2% ± 27.1 | 87.5% ± 23.0 |
+  | Poisoned updates caught | — | 53.3% ± 14.0 | 57.6% ± 15.1 |
+  | Honest updates wrongly flagged | — | 2.7% ± 4.1 | 4.6% ± 3.8 |
+  | Tampered messages rejected | — | 105 / 105 | 105 / 105 |
+
+  **Communication cost** (58,369-parameter model): raw update 233,476 B;
+  Krypsis message 235,035 B — **+1,559 B (0.67%)** for header, fingerprint
+  and tag; the same update as a generic HTTP/JSON list of floats is
+  1,315,665 B (**5.6× larger**). Packing takes ~3.7 ms per message,
+  verifying + fingerprint check ~2.1 ms.
+
+  **What this shows:**
+  - **Integrity works perfectly:** every tampered message (105/105) was
+    rejected by the HMAC before reaching aggregation.
+  - **The anomaly filter helps, but only partly.** Label flipping cut
+    accuracy to 78.0% on average with no defense (as low as 20% in one
+    seed); with the protocol and global thresholds, 12 of 15 seeds stayed at
+    ≥ 99.9% (11 of 15 with Mondrian). It catches
+    only about half of the poisoned updates — the rest look ordinary
+    enough to pass, and FedAvg absorbs them.
+  - **It fails when router 3 or router 10 is an attacker.** The three seeds
+    where the protocol did not save the model (accuracy 12–83%) all had one
+    of them among the attackers. Likely reasons, not yet tested separately:
+    router 10 holds 25% of the training data, so any poisoned update of
+    its that slips through dominates FedAvg; router 3 was already the most
+    atypical honest client during calibration (norm z-scores up to ~13), so
+    the thresholds had to be loose enough to let its updates through.
+  - **Research Question — answered negatively in this setup.** Mondrian
+    thresholds caught slightly more attacks (+4.3 points) and flagged
+    slightly more honest updates (+1.9 points), but **neither difference is
+    statistically significant** (paired t-test over 15 seeds: p = 0.21 for
+    detection, p = 0.18 for false positives). Per seed it helped in some
+    runs (seed 0: 71% vs 36% caught) and hurt in others (seed 4: accuracy
+    54% vs 99.99%). A single promising seed during development
+    looked like a clear Mondrian win; the 15-seed run shows it was not —
+    reported as such. Likely reasons: with 10 clients and 5 calibration
+    rounds, each Mondrian cluster has very few calibration scores, so its
+    thresholds are noisy or fall back to the global ones; and the global
+    false-positive rate is already low (2.7%) once scores are standardized,
+    leaving little for Mondrian to fix.
+- **Next steps:** route flagged updates to Krum / trimmed mean instead of
+  dropping them; cap each client's FedAvg weight (the large-router
+  failure); more calibration rounds or more clients so Mondrian clusters
+  have enough data; multi-class detection; a backdoor attack.
 - **Presentation (`presentation/`):** still describes the NSL-KDD phase;
   to be regenerated with FLNET2023 results.
 
