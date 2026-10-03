@@ -5,3 +5,4 @@ scipy
 tensorflow
 joblib
 python-pptx
+reportlab

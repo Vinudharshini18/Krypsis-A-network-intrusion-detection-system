@@ -393,7 +393,7 @@ def slide_protocol_results(prs):
     rows = []
     for key, label in (("flnet/label_flip", "FLNET2023 · label flip"),
                        ("nslkdd/label_flip", "NSL-KDD · label flip"),
-                       ("flnet/backdoor", "FLNET2023 · backdoor"),
+                       ("flnet/backdoor", "FLNET2023 · backdoor (failed)"),
                        ("nslkdd/backdoor", "NSL-KDD · backdoor")):
         if key not in d:
             continue
@@ -462,9 +462,12 @@ def slide_roadmap(prs):
               "What we learned — including what didn't work", size=32, bold=True, font=FONT_DISPLAY)
 
     items = [
-        ("Binary detection on FLNET2023 is too easy",
-         "One feature alone (forward packet count) scores 97.5%; a 3-level decision tree 99.99%. "
-         "We checked the 100% instead of trusting it — and moved to multi-class detection."),
+        ("Binary detection on FLNET2023 is too easy — naming the attack is not",
+         "One feature alone scores 97.5% on attack vs normal. Asked for the exact attack type, federated "
+         "training on real routers reaches macro-F1 "
+         + (f"{R['multiclass']['federated_router']['macro_f1']:.2f} vs {R['multiclass']['federated_iid']['macro_f1']:.2f} "
+            "with IID data: attacks seen at only one router are never learned."
+            if R["multiclass"] else "(multi-class results pending).")),
         ("The first protocol design flagged honest clients",
          "Once training converges, every update looks noisy: 65–96% of honest updates were flagged. "
          "Fixed by scoring each update relative to the other clients in the same round."),

@@ -503,8 +503,9 @@ cd presentation && python build_deck.py && python build_handbook_pdf.py
   averaged model stays slightly weaker than training on all data together
   — here small because the task is easy. Per-round metrics saved to
   `results/federated_{router,iid}.json`.
-- **Phase 7 — Evaluation:** Partially done via Phases 6 and 8. Remaining:
-  which attack types the 55 router-split misses belong to, and plots.
+- **Phase 7 — Evaluation:** Done via Phases 6 and 8–10. Remaining nice-to-
+  have: plots, and which attack types the 55 binary router-split misses
+  belong to.
 - **Phase 8 — Custom protocol + poisoning evaluation:** Done.
   `src/protocol.py` (the protocol, see "As implemented" above) and
   `src/protocol_experiment.py` (the evaluation). Setup: router split, 10
@@ -642,68 +643,54 @@ cd presentation && python build_deck.py && python build_handbook_pdf.py
     Phase 8 failure depended on other run details (Phase 8 also dropped one
     tampered honest message every attack round), not only on the
     protocol's thresholds.
-- **Phase 10 — Multi-class detection:** In progress (`src/multiclass.py`).
-- **Phase 7 — Evaluation:** Partially done via Phases 6 and 8. Remaining:
-  which attack types the 55 router-split misses belong to, and plots.
-- **Phase 8 — Custom protocol + poisoning evaluation:** Done.
-  `src/protocol.py` (the protocol, see "As implemented" above) and
-  `src/protocol_experiment.py` (the evaluation). Setup: router split, 10
-  clients, 12 rounds (5 clean calibration rounds, then 7 attack rounds),
-  **2 randomly chosen label-flipping attackers** per seed, **15 seeds**,
-  each seed run under 3 policies — no defense (plain FedAvg), protocol with
-  global thresholds, protocol with Mondrian thresholds. In every
-  post-calibration round one honest message also has a payload byte
-  flipped in transit. Results (mean ± std over 15 seeds, post-calibration
-  rounds):
+- **Phase 10 — Multi-class detection:** Done. `src/multiclass.py` — the
+  same MLP with an 11-way softmax (Normal + 10 attack types), trained
+  centrally and with FedAvg (15 rounds, 2 local epochs) on the router and
+  IID splits; evaluated on the `TEST` capture. Saved to
+  `results/multiclass.json`.
 
-  | | No defense | Protocol, global | Protocol, Mondrian |
-  |---|---|---|---|
-  | Final test accuracy | 78.0% ± 23.5 | 88.2% ± 27.1 | 87.5% ± 23.0 |
-  | Poisoned updates caught | — | 53.3% ± 14.0 | 57.6% ± 15.1 |
-  | Honest updates wrongly flagged | — | 2.7% ± 4.1 | 4.6% ± 3.8 |
-  | Tampered messages rejected | — | 105 / 105 | 105 / 105 |
+  | | Accuracy | Macro-F1 |
+  |---|---|---|
+  | Centralized | 86.5% | 0.790 |
+  | FedAvg, IID split | 84.5% | 0.759 |
+  | **FedAvg, router split (real non-IID)** | **68.9%** | **0.389** |
 
-  **Communication cost** (58,369-parameter model): raw update 233,476 B;
-  Krypsis message 235,035 B — **+1,559 B (0.67%)** for header, fingerprint
-  and tag; the same update as a generic HTTP/JSON list of floats is
-  1,315,665 B (**5.6× larger**). Packing takes ~3.7 ms per message,
-  verifying + fingerprint check ~2.1 ms.
+  Per-class recall, router split: Normal, DoS-hulk, DoS-slowhttp and
+  Infiltration-mitm ≥ 98% — but **DDoS-bot, DDoS-dyn, DDoS-stomp,
+  Web-command-injection, Web-sql-injection and Web-xss all 0%**.
 
   **What this shows:**
-  - **Integrity works perfectly:** every tampered message (105/105) was
-    rejected by the HMAC before reaching aggregation.
-  - **The anomaly filter helps, but only partly.** Label flipping cut
-    accuracy to 78.0% on average with no defense (as low as 20% in one
-    seed); with the protocol and global thresholds, 12 of 15 seeds stayed at
-    ≥ 99.9% (11 of 15 with Mondrian). It catches
-    only about half of the poisoned updates — the rest look ordinary
-    enough to pass, and FedAvg absorbs them.
-  - **It fails when router 3 or router 10 is an attacker.** The three seeds
-    where the protocol did not save the model (accuracy 12–83%) all had one
-    of them among the attackers. Likely reasons, not yet tested separately:
-    router 10 holds 25% of the training data, so any poisoned update of
-    its that slips through dominates FedAvg; router 3 was already the most
-    atypical honest client during calibration (norm z-scores up to ~13), so
-    the thresholds had to be loose enough to let its updates through.
-  - **Research Question — answered negatively in this setup.** Mondrian
-    thresholds caught slightly more attacks (+4.3 points) and flagged
-    slightly more honest updates (+1.9 points), but **neither difference is
-    statistically significant** (paired t-test over 15 seeds: p = 0.21 for
-    detection, p = 0.18 for false positives). Per seed it helped in some
-    runs (seed 0: 71% vs 36% caught) and hurt in others (seed 4: accuracy
-    54% vs 99.99%). A single promising seed during development
-    looked like a clear Mondrian win; the 15-seed run shows it was not —
-    reported as such. Likely reasons: with 10 clients and 5 calibration
-    rounds, each Mondrian cluster has very few calibration scores, so its
-    thresholds are noisy or fall back to the global ones; and the global
-    false-positive rate is already low (2.7%) once scores are standardized,
-    leaving little for Mondrian to fix.
-- **Next steps:** route flagged updates to Krum / trimmed mean instead of
-  dropping them; cap each client's FedAvg weight (the large-router
-  failure); more calibration rounds or more clients so Mondrian clusters
-  have enough data; multi-class detection; a backdoor attack.
-- **Presentation (`presentation/`):** still describes the NSL-KDD phase;
-  to be regenerated with FLNET2023 results.
+  - **This is the non-IID problem the project is about, finally visible.**
+    Binary detection hid it (Phase 6: 99.93% on the router split). Asked
+    to *name* the attack, federated training on real routers loses half
+    its macro-F1, while the IID split with the same data stays close to
+    centralized. Every class the router model never learns is held by only
+    one or two routers (DDoS-bot: router 1; DDoS-dyn: router 9;
+    DDoS-stomp: router 5; command injection: router 1; SQL injection:
+    routers 3–4; XSS: routers 2 and 4). Each round, the other routers'
+    updates — which have never seen those classes — average them away.
+    DDoS-tcp is also held by a single router but reaches 70% recall,
+    because that router (10) carries 25% of the FedAvg weight.
+  - **Training does not settle.** Router-split accuracy swings between ~42%
+    and ~67% on alternating rounds before ending at 68.9%, a typical
+    symptom of client drift under strongly non-IID data.
+  - **Even centralized training confuses the DDoS variants** (DDoS-dyn 6%
+    recall, DDoS-stomp 42%) — they look alike at the flow level — so the
+    multi-class task is genuinely hard on this dataset, unlike the binary
+    one.
+  - Implication for the protocol: a router that is the *only* holder of an
+    attack type sends updates that legitimately disagree with everyone
+    else's — exactly the "honest but different" client that an anomaly
+    filter can wrongly reject. Running the protocol on the multi-class
+    task is the natural next experiment for the research question.
+- **Presentation (`presentation/`):** rebuilt for FLNET2023 — a 10-slide
+  deck (`build_deck.py`) and a speaking-script handbook with Q&A
+  (`build_handbook_pdf.py`). Both read their numbers from `results/*.json`,
+  so re-running them after an experiment keeps them in sync.
+- **Next steps:** run the protocol on the multi-class task (where honest
+  routers genuinely disagree); a trust-dependent weight cap instead of a
+  fixed one; more FLNET2023 seeds so its differences can reach
+  significance; more clients / longer calibration for Mondrian.
 
 ## References
 
