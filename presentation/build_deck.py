@@ -1,12 +1,16 @@
 """
-Builds the Krypsis class-presentation deck (Krypsis_Presentation.pptx) from
-the same 6-slide structure covered in the syllabus-mapped talk: Introduction,
-Application, Tools Used, Methodology, Status & Results, Learning.
+Builds the Krypsis class-presentation deck (Krypsis_Presentation.pptx):
+Introduction, Application, Tools Used, Methodology, Status & Results, the
+custom protocol and its results, Learning, Findings.
+
+Every number on the slides is read from results/*.json at build time, so
+the deck always matches the latest experiment runs.
 
 Run: ..\\venv\\Scripts\\python.exe build_deck.py
 Output: presentation/Krypsis_Presentation.pptx
 """
 
+import json
 import os
 
 from pptx import Presentation
@@ -17,6 +21,30 @@ from pptx.enum.shapes import MSO_SHAPE
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT_PATH = os.path.join(HERE, "Krypsis_Presentation.pptx")
+RESULTS_DIR = os.path.join(os.path.dirname(HERE), "results")
+
+
+def load_results():
+    def read(name):
+        with open(os.path.join(RESULTS_DIR, name)) as f:
+            return json.load(f)
+    r = {
+        "central": read("centralized_baseline.json"),
+        "fed_router": read("federated_router.json")[-1],
+        "fed_iid": read("federated_iid.json")[-1],
+        "protocol": read("protocol_experiment.json"),
+        "defense": read("defense_experiment.json")["summary"],
+    }
+    mc = os.path.join(RESULTS_DIR, "multiclass.json")
+    r["multiclass"] = read("multiclass.json") if os.path.exists(mc) else None
+    return r
+
+
+R = load_results()
+
+
+def pct(x, digits=1):
+    return f"{100 * x:.{digits}f}%"
 
 # Palette, matching the project's web presentation deck.
 INK = RGBColor(0x17, 0x24, 0x20)
@@ -175,8 +203,8 @@ def slide_intro(prs):
     add_bullets(slide, Inches(6.7), Inches(2.6), Inches(5.9), Inches(4),
         [
             "A Network Intrusion Detection System (NIDS) — watches network connections and classifies each as normal or attack.",
-            "Trained using Federated Learning: multiple simulated clients train one shared detector without ever sending raw traffic anywhere.",
-            "Extended with a custom communication protocol (in progress) for exchanging model updates — instead of plain HTTP/gRPC.",
+            "Trained using Federated Learning: 10 routers train one shared detector without ever sending raw traffic anywhere.",
+            "Model updates travel over our own security-fused protocol — integrity tag + fingerprint — instead of plain HTTP/gRPC.",
         ])
 
 
@@ -199,9 +227,9 @@ def slide_application(prs):
               "WHAT WE ACTUALLY BUILT", size=14, bold=True, color=ACCENT)
     add_bullets(slide, Inches(6.7), Inches(2.6), Inches(5.9), Inches(4),
         [
-            "Simulated 5 independent clients, each holding its own slice of network traffic data.",
-            "Trained one shared detection model across all 5 using Federated Averaging (FedAvg).",
-            "Tested both similar-traffic clients (IID) and very different-traffic clients (non-IID) — mimicking real organizational diversity.",
+            "Used FLNET2023: traffic captured at 10 real (emulated) routers — each router is one federated client with its own mix of attacks.",
+            "Trained one shared detection model across all 10 using Federated Averaging (FedAvg).",
+            "Built and attacked our custom protocol: poisoned updates, tampered messages, backdoors — and repeated it on NSL-KDD.",
         ])
 
 
@@ -220,7 +248,7 @@ def slide_tools(prs):
         ("TensorFlow / Keras", "Building & training the neural network"),
         ("scikit-learn", "Preprocessing, metrics, evaluation"),
         ("pandas / NumPy", "Data handling & arrays"),
-        ("NSL-KDD dataset", "Benchmark network-traffic records"),
+        ("FLNET2023 + NSL-KDD", "Router flow captures + classic benchmark"),
         ("Git & GitHub", "Version control, full project history"),
     ]
     cols, col_w, gap = 3, Inches(3.75), Inches(0.25)
@@ -243,10 +271,10 @@ def slide_methodology(prs):
               "How it was built, step by step", size=36, bold=True, font=FONT_DISPLAY)
 
     steps = [
-        "Preprocess NSL-KDD: encode protocol/service/flag, scale numeric features",
-        "Split data across 5 simulated clients (IID and non-IID)",
+        "Preprocess FLNET2023: 66 flow features, drop IP/port/time identifiers",
+        "One client per router — real non-IID data (19%–92% attack per router)",
         "Define the model: MLP, 256→128→64→1 neurons",
-        "Run FedAvg: local training → weighted averaging → repeat",
+        "Run FedAvg over the Krypsis protocol: train → verify → filter → average",
     ]
     col_w, gap = Inches(2.85), Inches(0.15)
     x0, y0, h = Inches(0.7), Inches(2.1), Inches(1.3)
@@ -263,10 +291,10 @@ def slide_methodology(prs):
     add_card(slide, Inches(0.7), Inches(4.2), Inches(11.9), Inches(2.7), bg=WHITE)
     add_bullets(slide, Inches(1.0), Inches(4.4), Inches(11.3), Inches(2.4),
         [
-            "Server sends the current shared model to all 5 clients.",
+            "Server sends the current shared model to all 10 router clients.",
             "Each client trains it further on its own data only — nothing else moves.",
-            "Clients send back only the updated numbers (weights), never raw traffic.",
-            "Server combines everyone's weights into one improved model, weighted by how much data each client had.",
+            "Clients send back only the updated weights, never raw traffic — wrapped in a Krypsis message (tag + fingerprint).",
+            "Server verifies each message, filters suspicious ones, then combines the rest weighted by data size (capped per client).",
             "Repeat for 15 rounds, checking accuracy after every round.",
         ], size=14)
 
@@ -278,10 +306,10 @@ def slide_status(prs):
               "What's done, and the real numbers", size=34, bold=True, font=FONT_DISPLAY)
 
     stats = [
-        ("83.3%", "Centralized baseline accuracy", GOOD),
-        ("80.2%", "Federated accuracy, IID clients", ACCENT),
-        ("79.1%", "Federated accuracy, non-IID clients", ACCENT),
-        ("99.0%", "In-distribution diagnostic", GOOD),
+        (pct(R["central"]["accuracy"]), "Centralized accuracy (FLNET2023)", GOOD),
+        (pct(R["fed_router"]["accuracy"], 2), "FedAvg, 10 real router clients", ACCENT),
+        (pct(R["fed_iid"]["accuracy"], 3), "FedAvg, IID control split", ACCENT),
+        ("105/105", "Tampered messages rejected", GOOD),
     ]
     col_w, gap = Inches(2.85), Inches(0.15)
     x0, y0, h = Inches(0.7), Inches(2.05), Inches(1.3)
@@ -290,12 +318,14 @@ def slide_status(prs):
         add_stat_chip(slide, x, y0, col_w, h, num, lbl, color=col)
 
     rows = [
-        ("Phase 1-2 — Environment & dataset setup", "Complete", GOOD),
-        ("Phase 3 — Preprocessing", "Complete", GOOD),
-        ("Phase 4 — Client simulation (IID + non-IID)", "Complete", GOOD),
-        ("Phase 5 — Model design & tuning", "Complete", GOOD),
-        ("Phase 6 — Federated training loop (FedAvg)", "Complete", GOOD),
-        ("Phase 7 — Custom security-fused protocol", "In progress", WARM),
+        ("Dataset switch: NSL-KDD → FLNET2023 (real router clients)", "Complete", GOOD),
+        ("Preprocessing, router split, MLP, FedAvg", "Complete", GOOD),
+        ("Custom protocol: HMAC tag + fingerprint + anomaly filter", "Complete", GOOD),
+        ("Global vs. Mondrian thresholds (research question)", "Answered", GOOD),
+        ("Weight cap + second check, backdoor attack, NSL-KDD replication", "Complete", GOOD),
+        ("Multi-class detection (11 traffic types)",
+         "Complete" if R["multiclass"] else "In progress",
+         GOOD if R["multiclass"] else WARM),
     ]
     ty = Inches(3.7)
     add_card(slide, Inches(0.7), ty, Inches(11.9), Inches(3.3), bg=WHITE)
@@ -306,9 +336,98 @@ def slide_status(prs):
         add_text(slide, Inches(9.7), ry, Inches(2.7), row_h, status, size=13.5, bold=True, color=col)
 
 
+def slide_protocol(prs):
+    slide = blank_slide(prs)
+    add_tag(slide, Inches(0.7), Inches(0.55), "06  THE KRYPSIS PROTOCOL")
+    add_text(slide, Inches(0.7), Inches(1.15), Inches(11.5), Inches(0.9),
+              "What one update message looks like", size=34, bold=True, font=FONT_DISPLAY)
+
+    comm = R["protocol"]["communication"]
+    parts = [
+        ("LENGTH", "4 B", PAPER_DEEP, Inches(1.0)),
+        ("HEADER + FINGERPRINT", "client, round, L2 norms, 64-number sketch", ACCENT_SOFT, Inches(3.6)),
+        ("PAYLOAD", f"model update, {comm['raw_payload_bytes']:,} B", WHITE, Inches(5.4)),
+        ("TAG", "HMAC-SHA256, 32 B", WARM_SOFT, Inches(1.9)),
+    ]
+    x, y, h = Inches(0.7), Inches(2.2), Inches(1.15)
+    for name, desc, bg, w in parts:
+        add_card(slide, x, y, w, h, bg=bg)
+        add_text(slide, x + Inches(0.12), y + Inches(0.1), w - Inches(0.24), Inches(0.35),
+                  name, size=11, bold=True, color=ACCENT)
+        add_text(slide, x + Inches(0.12), y + Inches(0.48), w - Inches(0.24), Inches(0.6),
+                  desc, size=11, color=INK)
+        x += w
+    overhead = comm["krypsis_overhead_bytes"] / comm["raw_payload_bytes"]
+    ratio = comm["http_json_bytes"] / comm["raw_payload_bytes"]
+    add_text(slide, Inches(0.7), Inches(3.45), Inches(11.9), Inches(0.4),
+              f"Protocol overhead: +{comm['krypsis_overhead_bytes']:,} B ({pct(overhead, 2)}) per update — "
+              f"the same update as plain HTTP/JSON is {ratio:.1f}x larger.",
+              size=13, color=INK_SOFT, italic=True)
+
+    add_text(slide, Inches(0.7), Inches(4.0), Inches(6), Inches(0.4),
+              "WHAT THE SERVER DOES, BEFORE AVERAGING", size=14, bold=True, color=ACCENT)
+    add_card(slide, Inches(0.7), Inches(4.45), Inches(11.9), Inches(2.6), bg=WHITE)
+    add_bullets(slide, Inches(1.0), Inches(4.6), Inches(11.3), Inches(2.4),
+        [
+            "1. Check the HMAC tag — any change in transit → reject.",
+            "2. Recompute the fingerprint from the payload — a client cannot lie about it.",
+            "3. Score the update vs. the other clients this round: size, direction vs. consensus, change vs. its own last update.",
+            "4. Over the calibrated threshold → flagged → second check against a trimmed-mean reference (rescue or drop).",
+            "5. Average the accepted updates, with no client weighted above 15%.",
+        ], size=13, space_after=6)
+
+
+def slide_protocol_results(prs):
+    slide = blank_slide(prs)
+    add_tag(slide, Inches(0.7), Inches(0.55), "07  PROTOCOL RESULTS")
+    add_text(slide, Inches(0.7), Inches(1.15), Inches(11.5), Inches(0.9),
+              "Does it stop the attacks?", size=34, bold=True, font=FONT_DISPLAY)
+    seeds = R["protocol"]["config"]["num_seeds"]
+    add_text(slide, Inches(0.7), Inches(1.95), Inches(11.7), Inches(0.5),
+              "2 of 10 clients attack after 5 clean rounds. Mean over random seeds; "
+              "v1 = protocol drops flagged updates, v2 = + weight cap + second check.",
+              size=13, color=INK_SOFT, italic=True)
+
+    d = R["defense"]
+    header = ["Dataset / attack", "Metric", "No defense", "Protocol v1", "Protocol v2"]
+    rows = []
+    for key, label in (("flnet/label_flip", "FLNET2023 · label flip"),
+                       ("nslkdd/label_flip", "NSL-KDD · label flip"),
+                       ("flnet/backdoor", "FLNET2023 · backdoor"),
+                       ("nslkdd/backdoor", "NSL-KDD · backdoor")):
+        if key not in d:
+            continue
+        metric = "backdoor_asr" if key.endswith("backdoor") else "accuracy"
+        name = "Backdoor success ↓" if metric == "backdoor_asr" else "Accuracy ↑"
+        cells = [label, name] + [
+            pct(d[key][p][f"{metric}_mean"]) if p in d[key] else "—"
+            for p in ("none", "v1", "v2")]
+        rows.append(cells)
+
+    widths = [Inches(3.3), Inches(2.3), Inches(2.1), Inches(2.1), Inches(2.1)]
+    y = Inches(2.6)
+    add_card(slide, Inches(0.7), y, Inches(11.9), Inches(0.55 * (len(rows) + 1) + 0.3), bg=WHITE)
+    for r_i, cells in enumerate([header] + rows):
+        x = Inches(0.95)
+        for c_i, cell in enumerate(cells):
+            add_text(slide, x, y + Inches(0.15) + r_i * Inches(0.55), widths[c_i], Inches(0.5),
+                      cell, size=13, bold=(r_i == 0 or c_i == 4),
+                      color=ACCENT if r_i == 0 else INK)
+            x += widths[c_i]
+
+    pg = R["protocol"]["summary"]
+    add_text(slide, Inches(0.7), Inches(5.9), Inches(11.9), Inches(1.2),
+              f"Research question — global vs. Mondrian thresholds ({seeds} seeds): Mondrian caught "
+              f"{pct(pg['mondrian']['detection_rate_mean'])} vs {pct(pg['global']['detection_rate_mean'])} "
+              f"of poisoned updates and wrongly flagged {pct(pg['mondrian']['false_positive_rate_mean'])} vs "
+              f"{pct(pg['global']['false_positive_rate_mean'])} of honest ones — neither difference is "
+              f"statistically significant.",
+              size=13, color=INK)
+
+
 def slide_learning(prs):
     slide = blank_slide(prs)
-    add_tag(slide, Inches(0.7), Inches(0.55), "06  LEARNING")
+    add_tag(slide, Inches(0.7), Inches(0.55), "08  LEARNING")
     add_text(slide, Inches(0.7), Inches(1.15), Inches(11.5), Inches(0.9),
               "How this connects to our syllabus", size=34, bold=True, font=FONT_DISPLAY)
     add_text(slide, Inches(0.7), Inches(1.95), Inches(11.7), Inches(0.5),
@@ -317,8 +436,8 @@ def slide_learning(prs):
 
     cards = [
         ("UNIT 1 — NETWORK EDGE, OSI LAYERS, PACKET SWITCHING",
-         "Every NSL-KDD record is packet/flow-level data: protocol_type (Network layer), "
-         "flag (Transport layer), service (Application layer). Our federated clients act as network edge nodes."),
+         "Every FLNET2023 record is a network flow captured at a router: ports, packet counts and sizes, "
+         "TCP flags, inter-arrival times. Our federated clients ARE routers — network edge nodes."),
         ("UNIT 2 — APPLICATION LAYER, TRANSPORT LAYER, SOCKETS, ROUTING",
          "Our custom protocol design is application-layer protocol design (vs. HTTP/gRPC). "
          "Client-server exchange mirrors socket-based communication. dst_host_count ties to routing/host addressing."),
@@ -338,32 +457,32 @@ def slide_learning(prs):
 
 def slide_roadmap(prs):
     slide = blank_slide(prs)
-    add_tag(slide, Inches(0.7), Inches(0.55), "07  ROADMAP")
+    add_tag(slide, Inches(0.7), Inches(0.55), "09  FINDINGS")
     add_text(slide, Inches(0.7), Inches(1.15), Inches(11.5), Inches(0.9),
-              "What's left, and exactly how", size=36, bold=True, font=FONT_DISPLAY)
-    add_text(slide, Inches(0.7), Inches(1.95), Inches(11.7), Inches(0.5),
-              "The first half (Objective 1) is fully complete and proven. The remaining work is scoped precisely, not vaguely.",
-              size=13, color=INK_SOFT, italic=True)
+              "What we learned — including what didn't work", size=32, bold=True, font=FONT_DISPLAY)
 
     items = [
-        ("Integrity + fingerprint protocol",
-         "Attach a lightweight integrity tag and a compact statistical fingerprint "
-         "(per-layer L2 norm + cosine similarity to consensus) to every client update."),
-        ("One poisoning attack",
-         "Simulate label-flipping attacks from malicious clients to have something real "
-         "to test detection against."),
-        ("Global vs. Mondrian threshold comparison",
-         "The core experiment: does one global anomaly threshold wrongly flag honest "
-         "non-IID clients, and does a per-cluster threshold fix that without losing real detection?"),
+        ("Binary detection on FLNET2023 is too easy",
+         "One feature alone (forward packet count) scores 97.5%; a 3-level decision tree 99.99%. "
+         "We checked the 100% instead of trusting it — and moved to multi-class detection."),
+        ("The first protocol design flagged honest clients",
+         "Once training converges, every update looks noisy: 65–96% of honest updates were flagged. "
+         "Fixed by scoring each update relative to the other clients in the same round."),
+        ("Mondrian thresholds did not significantly beat a global threshold",
+         "Our research question, answered honestly: with 10 clients and 5 calibration rounds, "
+         "each cluster has too little data for reliable thresholds."),
+        ("A fixed weight cap is not a free fix",
+         "Capping a large router stops it dominating when it attacks — but when it is honest, "
+         "its lost weight partly goes to the attackers (one FLNET2023 seed: 97.3% → 83.8%)."),
     ]
-    y0, h, gap = Inches(2.6), Inches(1.35), Inches(0.2)
+    y0, h, gap = Inches(2.15), Inches(1.1), Inches(0.15)
     for i, (title, body) in enumerate(items):
         y = y0 + i * (h + gap)
         add_card(slide, Inches(0.7), y, Inches(11.9), h, bg=WHITE)
         add_text(slide, Inches(1.0), y + Inches(0.15), Inches(0.6), Inches(0.5),
                   str(i + 1), size=22, bold=True, color=ACCENT, font=FONT_DISPLAY)
         add_text(slide, Inches(1.7), y + Inches(0.15), Inches(10.6), Inches(0.3), title, size=14, bold=True)
-        add_text(slide, Inches(1.7), y + Inches(0.5), Inches(10.6), Inches(0.75), body, size=12, color=INK_SOFT)
+        add_text(slide, Inches(1.7), y + Inches(0.5), Inches(10.6), Inches(0.85), body, size=12, color=INK_SOFT)
 
 
 def build():
@@ -374,6 +493,8 @@ def build():
     slide_tools(prs)
     slide_methodology(prs)
     slide_status(prs)
+    slide_protocol(prs)
+    slide_protocol_results(prs)
     slide_learning(prs)
     slide_roadmap(prs)
     prs.save(OUT_PATH)

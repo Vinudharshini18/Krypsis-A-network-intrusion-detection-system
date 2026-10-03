@@ -293,3 +293,60 @@ class MondrianCalibrator:
 def is_flagged(scores: dict, thresholds: dict) -> bool:
     return any(scores[s] is not None and scores[s] > thresholds[s]
                for s in SCORE_NAMES)
+
+
+# ---------------------------------------------------------------- aggregation
+# Second-stage server defenses (README > Phase 9). Both run only on updates
+# that already passed the integrity tag and fingerprint verification.
+
+def capped_weights(counts: dict, cap_factor: float) -> dict:
+    """FedAvg weights (proportional to sample count) with no client allowed
+    more than cap_factor x an equal share. Excess weight is redistributed to
+    the uncapped clients, repeating until every weight is within the cap.
+    Stops one large client (e.g. FLNET2023's router 10, 25% of the data)
+    from dominating the average when its update is poisoned."""
+    clients = list(counts)
+    cap = min(1.0, cap_factor / len(clients))
+    total = sum(counts.values())
+    weights = {c: counts[c] / total for c in clients}
+    for _ in range(len(clients)):
+        over = [c for c in clients if weights[c] > cap + 1e-12]
+        if not over:
+            break
+        free = [c for c in clients if c not in over]
+        excess = sum(weights[c] - cap for c in over)
+        for c in over:
+            weights[c] = cap
+        free_total = sum(weights[c] for c in free)
+        if free_total <= 0:
+            break
+        for c in free:
+            weights[c] += excess * weights[c] / free_total
+    return weights
+
+
+def trimmed_mean(updates: list, trim_fraction: float) -> np.ndarray:
+    """Coordinate-wise trimmed mean: per parameter, drop the largest and
+    smallest trim_fraction of values, average the rest."""
+    stacked = np.sort(np.stack(updates), axis=0)
+    k = int(len(updates) * trim_fraction)
+    return stacked[k:len(updates) - k].mean(axis=0)
+
+
+def second_check(accepted: dict, flagged: dict, trim_fraction: float) -> dict:
+    """Second, more expensive check for flagged updates, instead of dropping
+    them outright. Builds a robust reference (coordinate-wise trimmed mean
+    of ALL verified updates) and rescues a flagged update if it is no
+    farther from that reference than the farthest update that passed the
+    cheap filter. Returns the rescued subset of `flagged`.
+
+    Runs only in rounds where something was flagged, so the expensive part
+    is paid only when needed — the point of the "cheap filter first"
+    design."""
+    if not flagged or len(accepted) < 2:
+        return {}
+    reference = trimmed_mean(list(accepted.values()) + list(flagged.values()),
+                             trim_fraction)
+    limit = max(float(np.linalg.norm(d - reference)) for d in accepted.values())
+    return {c: d for c, d in flagged.items()
+            if float(np.linalg.norm(d - reference)) <= limit}
