@@ -186,23 +186,37 @@ def fig_message_size(protocol):
 
 
 def fig_dropout(robust):
+    """Final-round accuracy swings wildly under attack (one poisoned round can
+    drop it to ~28% before the next recovers), so this uses the mean
+    accuracy over all attack rounds instead."""
     if not robust or "dropout" not in robust["summary"]:
         return
-    s = robust["summary"]["dropout"]
-    rates = sorted(s, key=float)
-    fig, ax = plt.subplots(figsize=(6.5, 4))
+    runs = [r for r in robust["runs"] if r["experiment"] == "dropout"]
+    calib = robust["config"]["calibration_rounds"]
+    rates = sorted({r["setting"] for r in runs})
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4))
+    ax = axes[0]
     for color, (policy, label) in zip(SERIES, (("none", "No defense"), ("v2", "Protocol v2"))):
-        xs = [100 * float(r) for r in rates if policy in s[r]]
-        ys = [100 * s[r][policy]["final_accuracy_mean"] for r in rates if policy in s[r]]
-        if xs:
-            ax.plot(xs, ys, color=color, marker="o", label=label)
-            end_label(ax, xs[-1], ys[-1], f"{label} {ys[-1]:.1f}%", color)
-    ax.set_xticks([100 * float(r) for r in rates])
-    ax.set_xlim(-5, 100 * float(rates[-1]) + 22)
-    ax.set_xlabel("Chance each router is offline in a round (%)")
-    ax.set_ylabel("Final test accuracy (%)")
-    ax.set_title("Client dropout under label flipping (FLNET2023)")
-    save(fig, "dropout_accuracy.png", f"Mean over {robust['config']['num_seeds']} seeds; 2 of 10 routers attack.")
+        ys = [100 * np.mean([np.mean(r["accuracy_by_round"][calib:]) for r in runs
+                             if r["setting"] == p and r["policy"] == policy]) for p in rates]
+        ax.plot([100 * p for p in rates], ys, color=color, marker="o", label=label)
+        end_label(ax, 100 * rates[-1], ys[-1], f"{label} {ys[-1]:.1f}%", color)
+    ax.set_xlim(-5, 100 * rates[-1] + 24)
+    ax.set_ylabel("Mean accuracy over attack rounds (%)")
+    ax.set_title("Accuracy under attack")
+    ax = axes[1]
+    ys = [100 * np.mean([r["detection_rate"] for r in runs
+                         if r["setting"] == p and r["policy"] == "v2"]) for p in rates]
+    bars = ax.bar([100 * p for p in rates], ys, width=9, color=SERIES[1])
+    bar_labels(ax, bars, lambda v: f"{v:.0f}%")
+    ax.set_ylabel("Poisoned updates caught (%)")
+    ax.set_title("Protocol v2: attacks caught")
+    ax.grid(axis="x", visible=False)
+    for ax in axes:
+        ax.set_xticks([100 * p for p in rates])
+        ax.set_xlabel("Chance each router is offline in a round (%)")
+    save(fig, "dropout_accuracy.png",
+         f"FLNET2023, 2 of 10 routers flip labels; mean over {robust['config']['num_seeds']} seeds.")
 
 
 def fig_scale(robust):
@@ -229,31 +243,6 @@ def fig_scale(robust):
          f"FLNET2023, 20% of clients attack, mean over {robust['config']['num_seeds']} seeds.")
 
 
-def fig_shift(robust):
-    if not robust or "shift" not in robust["summary"]:
-        return
-    s = list(robust["summary"]["shift"].values())[0]
-    cfg = robust["config"]["shift"]
-    labels, vals_shift, vals_other = [], [], []
-    for policy, label in (("v2", "Global threshold"), ("v2_mondrian", "Mondrian thresholds")):
-        if policy in s:
-            labels.append(label)
-            vals_shift.append(100 * s[policy].get("shifted_client_excluded_rate_mean", 0))
-            vals_other.append(100 * s[policy].get("other_honest_excluded_after_shift_mean", 0))
-    x = np.arange(len(labels))
-    fig, ax = plt.subplots(figsize=(6.5, 4))
-    b1 = ax.bar(x - 0.18, vals_shift, width=0.34, color=SERIES[0],
-                label=f"Router {cfg['router']} (traffic changed)")
-    b2 = ax.bar(x + 0.18, vals_other, width=0.34, color=SERIES[1], label="Other honest routers")
-    bar_labels(ax, list(b1) + list(b2), lambda v: f"{v:.1f}%")
-    ax.set_xticks(x, labels)
-    ax.set_ylabel("Updates wrongly excluded (%)")
-    ax.set_title(f"Honest router starts seeing {cfg['type']}")
-    ax.grid(axis="x", visible=False)
-    ax.legend(loc="upper center", bbox_to_anchor=(0.5, -0.1), ncol=2)
-    save(fig, "distribution_shift.png", f"FLNET2023, no attackers, shift after round {cfg['round']}.")
-
-
 def main():
     print(f"Writing figures to {FIG_DIR}")
     defense = load("defense_experiment.json")
@@ -264,7 +253,8 @@ def main():
     robust = load("robustness_experiment.json")
     fig_dropout(robust)
     fig_scale(robust)
-    fig_shift(robust)
+    # The distribution-shift result is all zeros (no router ever wrongly
+    # excluded), which reads better as one sentence than as an empty chart.
 
 
 if __name__ == "__main__":

@@ -6,3 +6,4 @@ tensorflow
 joblib
 python-pptx
 reportlab
+matplotlib

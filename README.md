@@ -375,6 +375,8 @@ Krypsis-A-network-intrusion-detection-system/
 │   ├── defense_experiment.py      # Phase 9 — v2 defenses, backdoor, NSL-KDD
 │   ├── preprocess_nslkdd.py       # Phase 9 — NSL-KDD replication data
 │   ├── multiclass.py              # Phase 10 — 11-class detection
+│   ├── robustness_experiment.py   # Phase 11 — dropout, shift, scalability
+│   ├── make_plots.py              # Figures for README and slides
 │   └── indistribution_check.py    # NSL-KDD-era diagnostic (see Phase 5)
 ├── results/
 │   ├── centralized_baseline.json  # Phase 5 results (official TEST split)
@@ -382,7 +384,9 @@ Krypsis-A-network-intrusion-detection-system/
 │   ├── federated_iid.json         # Phase 6 results, IID control split
 │   ├── protocol_experiment.json   # Phase 8 results (all 45 runs + summary)
 │   ├── defense_experiment.json    # Phase 9 results (all 120 runs + summary)
-│   └── multiclass.json            # Phase 10 results
+│   ├── multiclass.json            # Phase 10 results
+│   ├── robustness_experiment.json # Phase 11 results (all 70 runs + summary)
+│   └── figures/                   # PNG figures (src/make_plots.py)
 ├── presentation/            # Slides + handbook (built from results/*.json)
 ├── requirements.txt         # Python dependencies
 ├── .gitignore
@@ -406,8 +410,44 @@ python src\protocol_experiment.py   # long: 45 federated runs
 python src\preprocess_nslkdd.py
 python src\defense_experiment.py    # long: 120 runs; resumable
 python src\multiclass.py
+python src\robustness_experiment.py # long: 70 runs; resumable
+python src\make_plots.py
 cd presentation && python build_deck.py && python build_handbook_pdf.py
 ```
+
+## Results at a glance
+
+All figures are generated from `results/*.json` by `src/make_plots.py`.
+
+**Protocol under attack** — label flipping by 2 of 10 clients, from round 6
+(Phases 8–9). The protocol keeps accuracy up; without it, accuracy swings.
+
+![Accuracy by round under label flipping](results/figures/attack_accuracy_by_round.png)
+
+**Backdoor on NSL-KDD** — share of `satan` attacks the poisoned model lets
+through (Phase 9).
+
+![Backdoor success rate](results/figures/backdoor_success.png)
+
+**Multi-class detection** — federated training over the real routers never
+learns attack types held by only one or two routers (Phase 10).
+
+![Per-class recall](results/figures/multiclass_recall.png)
+
+**Client dropout** — the protocol's advantage shrinks as more routers go
+offline (Phase 11).
+
+![Dropout](results/figures/dropout_accuracy.png)
+
+**Scalability and the research question** — more clients help the
+protocol; Mondrian thresholds never beat the global one (Phase 11).
+
+![Global vs Mondrian by number of clients](results/figures/scale_global_vs_mondrian.png)
+
+**Communication cost** — the Krypsis header, fingerprint and tag add 0.67%;
+plain HTTP/JSON would be 5.6× larger (Phase 8).
+
+![Message size](results/figures/message_size.png)
 
 ## Progress Log
 
@@ -503,9 +543,8 @@ cd presentation && python build_deck.py && python build_handbook_pdf.py
   averaged model stays slightly weaker than training on all data together
   — here small because the task is easy. Per-round metrics saved to
   `results/federated_{router,iid}.json`.
-- **Phase 7 — Evaluation:** Done via Phases 6 and 8–10. Remaining nice-to-
-  have: plots, and which attack types the 55 binary router-split misses
-  belong to.
+- **Phase 7 — Evaluation:** Done via Phases 6 and 8–11, with figures (see
+  "Results at a glance").
 - **Phase 8 — Custom protocol + poisoning evaluation:** Done.
   `src/protocol.py` (the protocol, see "As implemented" above) and
   `src/protocol_experiment.py` (the evaluation). Setup: router split, 10
@@ -683,14 +722,79 @@ cd presentation && python build_deck.py && python build_handbook_pdf.py
     else's — exactly the "honest but different" client that an anomaly
     filter can wrongly reject. Running the protocol on the multi-class
     task is the natural next experiment for the research question.
+- **Phase 11 — Robustness: dropout, distribution shift, scalability:**
+  Done. `src/robustness_experiment.py`, FLNET2023 router split, protocol v2,
+  5 seeds per setting, 70 federated runs. Saved to
+  `results/robustness_experiment.json`.
+
+  **A note on the accuracy measure.** Under attack, accuracy swings from
+  round to round — one poisoned round can drop it to ~28%, and the next
+  clean round brings it back to ~100%. The last round's accuracy therefore
+  depends on luck, so the dropout results use the **mean accuracy over all
+  7 attack rounds** and the share of attack rounds below 90%.
+
+  **1. Client dropout** — each round, every router is offline with
+  probability p; 2 routers flip labels.
+
+  | Offline chance p | 0% | 20% | 40% |
+  |---|---|---|---|
+  | Mean accuracy over attack rounds, no defense | 92.6% | 89.7% | 78.6% |
+  | Mean accuracy over attack rounds, protocol v2 | **97.1%** | **90.8%** | **81.9%** |
+  | Attack rounds below 90%, no defense | 25.7% | 22.9% | 40.0% |
+  | Attack rounds below 90%, protocol v2 | **5.7%** | 17.1% | 37.1% |
+  | Poisoned updates caught (v2) | 71% | 64% | 36% |
+  | Honest updates wrongly excluded (v2) | 0.4% | 0.4% | 0.7% |
+
+  The protocol still helps at every dropout level and keeps wrongly
+  excluded honest updates under 1%, but **its advantage shrinks as dropout
+  grows**: at 40% it catches only about a third of the poisoned updates.
+  Likely reason (not tested separately): the anomaly scores compare each
+  update with the median of the *current round*; with ~6 routers online,
+  the 2 attackers are a third of the round and pull that median toward
+  themselves.
+
+  **2. Distribution shift** — no attackers; after round 8, router 3 (19%
+  attack traffic, no DDoS) suddenly also sees DDoS-stomp flows, correctly
+  labelled, at 30% of its data size. Result: router 3 was **never wrongly
+  excluded** (0% in all 5 seeds, global and Mondrian alike), no other honest
+  router was excluded either, and accuracy stayed at 100%. An honest change
+  in traffic did not trigger the filter. Caveat: in the binary task the new
+  flows are simply more "attack" examples, which every router already
+  learns; a shift in the multi-class task would be a harder test.
+
+  **3. Scalability: 10, 20, 40 clients** — every router's data split at
+  random into 1, 2 or 4 sub-clients; 20% of clients flip labels.
+
+  | Clients | 10 | 20 | 40 |
+  |---|---|---|---|
+  | Poisoned updates caught, global | 71% | 89% | 84% |
+  | Poisoned updates caught, Mondrian | 67% | 94% | 78% |
+  | Honest wrongly excluded, global | 0.4% | 1.3% | 0.4% |
+  | Honest wrongly excluded, Mondrian | 1.1% | 1.8% | 1.7% |
+  | Final accuracy (global) | 96.7% | 100.0% | 99.9% |
+  | Server time per round (verify + score + aggregate) | 24 ms | 37 ms | 73 ms |
+
+  - **More clients make the protocol better**: more updates per round give
+    a more reliable median to compare against, and each attacker carries
+    less weight.
+  - **Research question, third time:** Phases 8–9 suggested Mondrian failed
+    because each cluster had too few clients. With 4× the clients it still
+    shows **no significant difference** from a global threshold (all
+    p ≥ 0.11), and at 40 clients it wrongly excludes ~4× more honest
+    updates. So the "too few clients" explanation is **not supported** up
+    to 40 clients — the cheaper global threshold is the better choice in
+    every setting we tested.
+  - **Server cost grows roughly linearly** with the number of clients
+    (~1.8 ms per client per round) — negligible next to local training.
 - **Presentation (`presentation/`):** rebuilt for FLNET2023 — a 10-slide
   deck (`build_deck.py`) and a speaking-script handbook with Q&A
   (`build_handbook_pdf.py`). Both read their numbers from `results/*.json`,
   so re-running them after an experiment keeps them in sync.
 - **Next steps:** run the protocol on the multi-class task (where honest
-  routers genuinely disagree); a trust-dependent weight cap instead of a
-  fixed one; more FLNET2023 seeds so its differences can reach
-  significance; more clients / longer calibration for Mondrian.
+  routers genuinely disagree, and a distribution shift would be a real
+  test); a trust-dependent weight cap instead of a fixed one; scoring
+  against a longer history than the current round, to survive heavy
+  dropout; more FLNET2023 seeds so its differences can reach significance.
 
 ## References
 
