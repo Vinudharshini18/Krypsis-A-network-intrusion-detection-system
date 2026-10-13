@@ -143,25 +143,35 @@ def show_saved_results():
     c = load("centralized_baseline.json")
     r = load("federated_router.json")
     if c and r:
-        print(f"Binary detection: centralized {100 * c['accuracy']:.2f}%, "
+        print(f"FLNET2023 binary detection: centralized {100 * c['accuracy']:.2f}%, "
               f"federated over 10 routers {100 * r[-1]['accuracy']:.2f}%")
     d = load("defense_experiment.json")
     if d:
         s = d["summary"]
+        fl = s["flnet/label_flip"]
+        print("\nFLNET2023 (main dataset) - protocol under attack:")
+        print(f"  Label flipping: accuracy {100 * fl['none']['accuracy_mean']:.1f}% (no defense) -> "
+              f"{100 * fl['v1']['accuracy_mean']:.1f}% (protocol v1), "
+              f"{100 * fl['v2']['accuracy_mean']:.1f}% (protocol v2)")
+        print(f"  Honest updates wrongly blocked: {100 * fl['v1']['false_positive_rate_mean']:.1f}% (v1), "
+              f"{100 * fl['v2']['false_positive_rate_mean']:.1f}% (v2)")
+        print("  Backdoor: failed even with no defense (0% success) - the honest routers outvote it")
         nl, nb = s["nslkdd/label_flip"], s["nslkdd/backdoor"]
-        print(f"NSL-KDD label flipping: accuracy {100 * nl['none']['accuracy_mean']:.1f}% "
-              f"(no defense) -> {100 * nl['v2']['accuracy_mean']:.1f}% (protocol)")
-        print(f"NSL-KDD backdoor success: {100 * nb['none']['backdoor_asr_mean']:.1f}% "
-              f"-> {100 * nb['v2']['backdoor_asr_mean']:.1f}%")
+        print("\nNSL-KDD (second dataset, harder task) - same protocol, same attacks:")
+        print(f"  Label flipping: accuracy {100 * nl['none']['accuracy_mean']:.1f}% (no defense) -> "
+              f"{100 * nl['v2']['accuracy_mean']:.1f}% (protocol v2)")
+        print(f"  Backdoor success: {100 * nb['none']['backdoor_asr_mean']:.1f}% -> "
+              f"{100 * nb['v2']['backdoor_asr_mean']:.1f}%")
+        print()
     m = load("multiclass.json")
     if m:
-        print(f"Multi-class (11 types) macro-F1: centralized {m['centralized']['macro_f1']:.2f}, "
+        print(f"FLNET2023 multi-class (11 types) macro-F1: centralized {m['centralized']['macro_f1']:.2f}, "
               f"IID {m['federated_iid']['macro_f1']:.2f}, "
               f"real routers {m['federated_router']['macro_f1']:.2f}")
     p = load("protocol_experiment.json")
     if p:
         g, mo = p["summary"]["global"], p["summary"]["mondrian"]
-        print(f"Global vs Mondrian thresholds: caught {100 * g['detection_rate_mean']:.1f}% vs "
+        print(f"FLNET2023 global vs Mondrian thresholds: caught {100 * g['detection_rate_mean']:.1f}% vs "
               f"{100 * mo['detection_rate_mean']:.1f}% - not significantly different")
     print(f"\nFigures: {os.path.join(RESULTS_DIR, 'figures')}")
 
