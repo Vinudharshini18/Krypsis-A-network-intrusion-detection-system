@@ -377,6 +377,7 @@ Krypsis-A-network-intrusion-detection-system/
 │   ├── multiclass.py              # Phase 10 — 11-class detection
 │   ├── robustness_experiment.py   # Phase 11 — dropout, shift, scalability
 │   ├── make_plots.py              # Figures for README and slides
+│   ├── demo.py                    # ~3-minute live demo of the whole pipeline
 │   └── indistribution_check.py    # NSL-KDD-era diagnostic (see Phase 5)
 ├── results/
 │   ├── centralized_baseline.json  # Phase 5 results (official TEST split)
@@ -396,6 +397,13 @@ Krypsis-A-network-intrusion-detection-system/
 ## Setup
 
 Requires **Python 3.10–3.13** (TensorFlow has no Python 3.14 build yet).
+
+**Quick demo (~3 minutes, once the data is prepared):**
+`python src\demo.py` — shows the 10 routers, one protocol message being
+accepted and then rejected after a one-byte change, a short federated run
+with 2 attacking routers with and without the protocol (round by round:
+accuracy and which routers were blocked), and the headline results of the
+full experiments.
 
 ```
 python -m venv venv
