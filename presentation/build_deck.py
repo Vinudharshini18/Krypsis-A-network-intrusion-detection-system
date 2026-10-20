@@ -1,7 +1,7 @@
 """
 Builds the Krypsis class-presentation deck (Krypsis_Presentation.pptx):
 Introduction, Application, Tools Used, Methodology, Status & Results, the
-custom protocol and its results, Learning, Findings.
+custom protocol and its results, Robustness, Learning, Findings.
 
 Every number on the slides is read from results/*.json at build time, so
 the deck always matches the latest experiment runs.
@@ -37,6 +37,8 @@ def load_results():
     }
     mc = os.path.join(RESULTS_DIR, "multiclass.json")
     r["multiclass"] = read("multiclass.json") if os.path.exists(mc) else None
+    rb = os.path.join(RESULTS_DIR, "robustness_experiment.json")
+    r["robustness"] = read("robustness_experiment.json") if os.path.exists(rb) else None
     return r
 
 
@@ -323,13 +325,16 @@ def slide_status(prs):
         ("Custom protocol: HMAC tag + fingerprint + anomaly filter", "Complete", GOOD),
         ("Global vs. Mondrian thresholds (research question)", "Answered", GOOD),
         ("Weight cap + second check, backdoor attack, NSL-KDD replication", "Complete", GOOD),
+        ("Robustness: client dropout, traffic shift, 10–40 clients",
+         "Complete" if R["robustness"] else "In progress",
+         GOOD if R["robustness"] else WARM),
         ("Multi-class detection (11 traffic types)",
          "Complete" if R["multiclass"] else "In progress",
          GOOD if R["multiclass"] else WARM),
     ]
     ty = Inches(3.7)
     add_card(slide, Inches(0.7), ty, Inches(11.9), Inches(3.3), bg=WHITE)
-    row_h = Inches(0.5)
+    row_h = Inches(0.43)
     for i, (name, status, col) in enumerate(rows):
         ry = ty + Inches(0.25) + i * row_h
         add_text(slide, Inches(1.0), ry, Inches(8.5), row_h, name, size=13.5)
@@ -425,9 +430,57 @@ def slide_protocol_results(prs):
               size=13, color=INK)
 
 
+def slide_robustness(prs):
+    slide = blank_slide(prs)
+    add_tag(slide, Inches(0.7), Inches(0.55), "08  ROBUSTNESS")
+    add_text(slide, Inches(0.7), Inches(1.15), Inches(11.5), Inches(0.9),
+              "Dropout, traffic shift, more clients", size=34, bold=True, font=FONT_DISPLAY)
+    rb = R["robustness"]
+    seeds = rb["config"]["num_seeds"]
+    add_text(slide, Inches(0.7), Inches(1.95), Inches(11.7), Inches(0.5),
+              f"FLNET2023 router split, protocol v2, {seeds} seeds per setting.",
+              size=13, color=INK_SOFT, italic=True)
+
+    add_card(slide, Inches(0.7), Inches(2.5), Inches(7.4), Inches(3.4), bg=WHITE)
+    slide.shapes.add_picture(os.path.join(RESULTS_DIR, "figures", "dropout_accuracy.png"),
+                             Inches(0.8), Inches(2.6), width=Inches(7.2))
+
+    s = rb["summary"]
+    shift = next(iter(s["shift"].values()))["v2"]
+    scale = s["scale"]
+    ms = [scale[k]["v2"]["mean_server_ms_per_round_mean"] for k in ("1", "2", "4")]
+    cards = [
+        ("CLIENT DROPOUT",
+         f"Still helps at every level, but catches only "
+         f"{pct(s['dropout']['0.4']['v2']['detection_rate_mean'], 0)} of poisoned updates "
+         f"when routers are offline 40% of the time."),
+        ("TRAFFIC SHIFT",
+         f"A router suddenly seeing new DDoS traffic was wrongly excluded "
+         f"{pct(shift['shifted_client_excluded_rate_mean'], 0)} of the time."),
+        ("10 → 20 → 40 CLIENTS",
+         f"Catches {pct(scale['1']['v2']['detection_rate_mean'], 0)} → "
+         f"{pct(scale['2']['v2']['detection_rate_mean'], 0)} → "
+         f"{pct(scale['4']['v2']['detection_rate_mean'], 0)}; server time "
+         f"{ms[0]:.0f} → {ms[1]:.0f} → {ms[2]:.0f} ms per round."),
+    ]
+    y0, h, gap = Inches(2.5), Inches(1.0), Inches(0.2)
+    for i, (title, body) in enumerate(cards):
+        y = y0 + i * (h + gap)
+        add_card(slide, Inches(8.3), y, Inches(4.3), h, bg=WHITE)
+        add_text(slide, Inches(8.5), y + Inches(0.08), Inches(3.9), Inches(0.3),
+                  title, size=11, bold=True, color=ACCENT)
+        add_text(slide, Inches(8.5), y + Inches(0.38), Inches(3.9), Inches(0.6),
+                  body, size=11, color=INK)
+
+    add_text(slide, Inches(0.7), Inches(6.15), Inches(11.9), Inches(0.9),
+              "More clients make the protocol stronger; heavy dropout makes it weaker. "
+              "Mondrian thresholds still showed no significant gain over a global threshold, even at 40 clients.",
+              size=13, color=INK)
+
+
 def slide_learning(prs):
     slide = blank_slide(prs)
-    add_tag(slide, Inches(0.7), Inches(0.55), "08  LEARNING")
+    add_tag(slide, Inches(0.7), Inches(0.55), "09  LEARNING")
     add_text(slide, Inches(0.7), Inches(1.15), Inches(11.5), Inches(0.9),
               "How this connects to our syllabus", size=34, bold=True, font=FONT_DISPLAY)
     add_text(slide, Inches(0.7), Inches(1.95), Inches(11.7), Inches(0.5),
@@ -457,7 +510,7 @@ def slide_learning(prs):
 
 def slide_roadmap(prs):
     slide = blank_slide(prs)
-    add_tag(slide, Inches(0.7), Inches(0.55), "09  FINDINGS")
+    add_tag(slide, Inches(0.7), Inches(0.55), "10  FINDINGS")
     add_text(slide, Inches(0.7), Inches(1.15), Inches(11.5), Inches(0.9),
               "What we learned — including what didn't work", size=32, bold=True, font=FONT_DISPLAY)
 
@@ -498,6 +551,7 @@ def build():
     slide_status(prs)
     slide_protocol(prs)
     slide_protocol_results(prs)
+    slide_robustness(prs)
     slide_learning(prs)
     slide_roadmap(prs)
     prs.save(OUT_PATH)
