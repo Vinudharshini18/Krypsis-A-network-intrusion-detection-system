@@ -9,10 +9,13 @@ palette (blue, orange, aqua), always in that order, and every series is
 also named by a direct label or legend, never by colour alone.
 
 Run: venv\\Scripts\\python.exe src\\make_plots.py
+     venv\\Scripts\\python.exe src\\make_plots.py --deck   (muted set for the
+     final-review slides, written to presentation/figures/)
 """
 
 import json
 import os
+import sys
 
 import matplotlib
 
@@ -30,7 +33,24 @@ INK = "#0b0b0b"
 INK_SOFT = "#52514e"
 GRID = "#e4e3df"
 
-plt.rcParams.update({
+# Muted variant for the final-review deck: dark teal, bronze, slate — far apart
+# in lightness and on opposite sides of the warm/cool axis; every series is
+# still named by a direct label or legend.
+DECK = {"series": ["#2f4f4a", "#a6784a", "#7e95a6"], "surface": "#f7f6f2",
+        "ink": "#1f2421", "ink_soft": "#5b625c", "grid": "#e3e0d8",
+        "dir": os.path.join(PROJECT_ROOT, "presentation", "figures")}
+
+
+def apply_deck_theme():
+    global SERIES, SURFACE, INK, INK_SOFT, GRID, FIG_DIR
+    SERIES, SURFACE, INK, INK_SOFT, GRID = (DECK["series"], DECK["surface"], DECK["ink"],
+                                           DECK["ink_soft"], DECK["grid"])
+    FIG_DIR = DECK["dir"]
+    _rc()
+
+
+def _rc():
+    plt.rcParams.update({
     "figure.facecolor": SURFACE, "axes.facecolor": SURFACE, "savefig.facecolor": SURFACE,
     "axes.edgecolor": GRID, "axes.labelcolor": INK_SOFT, "axes.titlecolor": INK,
     "axes.titlesize": 13, "axes.titleweight": "bold", "axes.titlelocation": "left",
@@ -40,7 +60,10 @@ plt.rcParams.update({
     "axes.spines.top": False, "axes.spines.right": False,
     "legend.frameon": False, "legend.fontsize": 9.5, "font.family": "DejaVu Sans",
     "lines.linewidth": 2, "lines.markersize": 6,
-})
+    })
+
+
+_rc()
 
 
 def load(name):
@@ -244,6 +267,8 @@ def fig_scale(robust):
 
 
 def main():
+    if "--deck" in sys.argv:
+        apply_deck_theme()
     print(f"Writing figures to {FIG_DIR}")
     defense = load("defense_experiment.json")
     fig_attack_accuracy(defense)
