@@ -1,8 +1,8 @@
 """
-Builds Krypsis_Final_Review.pptx — the final-review deck: a detailed
-introduction, objectives and methodology, the results, comparisons with
-existing approaches and between our own setups, conclusions and references.
-Every slide has speaker notes.
+Builds Krypsis_Final_Review.pptx — the 12-slide final-review deck:
+introduction, objectives, four methodology slides with the main code on
+them, results, comparisons with existing approaches and between our own
+setups, conclusion and references. Every slide has speaker notes.
 
 Numbers are read from results/*.json (through build_deck.load_results), so
 the deck always matches the latest experiment runs.
@@ -13,6 +13,7 @@ Output: presentation/Krypsis_Final_Review.pptx
 
 import os
 import re
+import textwrap
 
 import numpy as np
 from pptx import Presentation
@@ -273,6 +274,49 @@ ROUTERS = [
 ]
 
 
+
+# ------------------------------------------------------------------ code
+
+MONO = "Consolas"
+CODE_BG = RGBColor(0xFB, 0xFA, 0xF7)
+KEYWORDS = {"def", "return", "for", "in", "if", "not", "or", "and", "import", "from",
+            "class", "else", "None", "True", "False", "with", "as", "lambda"}
+_TOKEN = re.compile(r'(#.*$)|("[^"]*")|([A-Za-z_][A-Za-z_0-9]*)|(.)')
+
+
+def _code_runs(line):
+    """Quiet syntax colouring: keywords in the accent, strings in bronze,
+    comments muted."""
+    runs = []
+    for m in _TOKEN.finditer(line):
+        comment, string, word, _ = m.groups()
+        if comment:
+            runs.append((comment, {"color": MUTED, "italic": True}))
+        elif string:
+            runs.append((string, {"color": BRONZE}))
+        elif word in KEYWORDS:
+            runs.append((word, {"color": ACCENT, "bold": True}))
+        else:
+            runs.append((m.group(0), {}))
+    return runs or [(" ", {})]
+
+
+def code(slide, x, y, w, h, source, label, size=9.5):
+    """A code card: a source excerpt with its file name on top."""
+    rect(slide, x, y, w, h, fill=CODE_BG, line=LINE)
+    rect(slide, x, y, Inches(0.05), h, fill=ACCENT, line=None)
+    text(slide, x + Inches(0.25), y + Inches(0.12), w - Inches(0.4), Inches(0.25), label,
+         size=9, color=MUTED, font=MONO)
+    hrule(slide, x + Inches(0.25), y + Inches(0.42), w - Inches(0.45), color=LINE, weight=0.5)
+    lines = textwrap.dedent(source).strip("\n").split("\n")
+    text(slide, x + Inches(0.25), y + Inches(0.55), w - Inches(0.35), h - Inches(0.65),
+         [_code_runs(line) for line in lines], size=size, font=MONO, spacing=1.08)
+
+
+def label(slide, x, y, w, content, color=ACCENT):
+    text(slide, x, y, w, Inches(0.3), content.upper(), size=10.5, bold=True, color=color)
+
+
 # ------------------------------------------------------------------ slides
 
 def s_title(prs):
@@ -298,177 +342,92 @@ def s_title(prs):
                  "protects the model updates with our own protocol.")
 
 
-def s_outline(prs):
-    slide = base(prs, "Outline", "What this review covers")
-    parts = [
-        ("01", "Introduction", "The privacy problem, federated learning, the security gap"),
-        ("02", "Objectives", "Five objectives and how far each was met"),
-        ("03", "Methodology", "Data, model, the Krypsis protocol, experiment design"),
-        ("04", "Results", "Detection, attacks, backdoors, robustness"),
-        ("05", "Comparison", "Against existing approaches and between our setups"),
-        ("06", "Conclusion", "Answers, limitations, future work, references"),
+def s_intro(prs):
+    slide = base(prs, "Introduction", "Intrusion detection without sharing traffic")
+    blocks = [
+        ("The problem", "An intrusion detection system (NIDS) learns to tell normal flows "
+         "from attacks, so it needs varied traffic. But traffic logs reveal hosts, services "
+         "and internal structure, so organisations cannot simply pool them."),
+        ("Federated learning", "Each router trains the shared model on its own traffic and "
+         "sends back only the change in weights. The server averages the changes (FedAvg). "
+         "Raw traffic never leaves a router."),
+        ("The new risk", "The updates become the attack surface: they can be tampered with "
+         "in transit or poisoned by a compromised router (label flipping, backdoors). And "
+         "honest routers with unusual traffic (non-IID) can look like attackers."),
     ]
-    for i, (num, name, desc) in enumerate(parts):
-        col, row = divmod(i, 3)
-        x = LEFT + col * Inches(6.0)
-        y = Inches(2.15) + row * Inches(1.45)
-        text(slide, x, y, Inches(1.0), Inches(0.7), num, size=30, font=SERIF, color=ACCENT)
-        text(slide, x + Inches(1.0), y + Inches(0.05), Inches(4.8), Inches(1.1),
-             [[(name, {"size": 17, "font": SERIF})], [(desc, {"size": 12, "color": INK_SOFT})]],
-             spacing=1.25)
-    notes(slide, "Six parts. Introduction, objectives and methodology are covered in detail; "
-                 "then results, the comparisons, and our conclusions.")
+    for i, (head, body) in enumerate(blocks):
+        y = Inches(1.95) + i * Inches(1.15)
+        label(slide, LEFT, y, Inches(6.0), head)
+        text(slide, LEFT, y + Inches(0.3), Inches(6.0), Inches(0.85), body, size=12.5,
+             color=INK, spacing=1.2)
 
-
-# ---- 01 Introduction
-
-def s_background(prs):
-    slide = base(prs, "01 · Introduction", "Intrusion detection needs data nobody wants to share")
-    text(slide, LEFT, Inches(2.0), Inches(5.6), Inches(0.35), "THE PROBLEM", size=11,
-         bold=True, color=ACCENT)
-    bullets(slide, LEFT, Inches(2.45), Inches(5.6), Inches(4.2), [
-        ("Detectors learn from traffic.", "A network intrusion detection system (NIDS) "
-         "classifies flows as normal or attack; it is only as good as the variety of "
-         "traffic it has seen."),
-        ("Pooling traffic is risky.", "Logs reveal hosts, services and internal "
-         "structure — central collection creates a privacy and compliance problem."),
-        ("One server, one point of failure.", "A central data lake is an attractive "
-         "target and a bandwidth bottleneck."),
-    ], size=13.5, gap=12)
-    card(slide, Inches(7.0), Inches(2.0), Inches(5.5), Inches(3.45), fill=WHITE)
-    text(slide, Inches(7.35), Inches(2.3), Inches(4.8), Inches(0.35), "WHERE IT MATTERS",
-         size=11, bold=True, color=ACCENT)
-    bullets(slide, Inches(7.35), Inches(2.75), Inches(4.85), Inches(3.6), [
-        ("Hospitals, banks, universities", "training one shared detector without "
-         "exposing their networks to each other."),
-        ("ISPs and edge / IoT networks", "where every router or gateway already sees "
-         "its own slice of traffic."),
-        ("Cross-border security teams", "bound by different data-protection laws."),
-    ], size=13, gap=12)
-    notes(slide, "Start with the motivation: detection needs varied traffic, but traffic is "
-                 "sensitive. Centralizing it is a privacy, legal and security problem. The "
-                 "examples on the right are the settings where that matters most.")
-
-
-def s_fl(prs):
-    slide = base(prs, "01 · Introduction", "Federated learning: move the model, not the data")
-    sw, sh = Inches(3.2), Inches(0.9)
-    sx, sy = (W - sw) / 2, Inches(1.95)
-    box_label(slide, sx, sy, sw, sh, "Aggregation server", "averages updates (FedAvg)",
-              fill=ACCENT_SOFT, line=ACCENT, title_color=ACCENT)
-    labels = ["Router 1", "Router 2", "Router 3", None, "Router 10"]
-    bw, bh, by = Inches(1.9), Inches(0.9), Inches(4.35)
-    step = Inches(2.35)
-    x0 = (W - (4 * step + bw)) / 2
-    centres = [x0 + i * step + bw / 2 for i in range(5)]
-    bus = by - Inches(0.75)
+    # Small federated-learning diagram.
+    cx0, cy0, cw, ch = Inches(7.25), Inches(1.95), Inches(5.28), Inches(3.3)
+    card(slide, cx0, cy0, cw, ch)
+    mid = cx0 + cw / 2
+    sw, sh = Inches(2.6), Inches(0.68)
+    box_label(slide, mid - sw / 2, cy0 + Inches(0.3), sw, sh, "Aggregation server",
+              "FedAvg", fill=ACCENT_SOFT, line=ACCENT, title_color=ACCENT, size=11.5)
+    bw, bh, step = Inches(1.05), Inches(0.62), Inches(1.25)
+    x0 = mid - (3 * step + bw) / 2
+    by = cy0 + Inches(1.95)
+    bus = by - Inches(0.5)
+    centres = [x0 + i * step + bw / 2 for i in range(4)]
     hrule(slide, centres[0], bus, centres[-1] - centres[0], color=MUTED, weight=1)
-    line = _plain(slide.shapes.add_connector(MSO_CONNECTOR.STRAIGHT,
-                                             *_e(W / 2, sy + sh, W / 2, bus)))
+    line = _plain(slide.shapes.add_connector(
+        MSO_CONNECTOR.STRAIGHT, *_e(mid, cy0 + Inches(0.3) + sh, mid, bus)))
     line.line.color.rgb, line.line.width = MUTED, Pt(1)
-    for cx, lab in zip(centres, labels):
+    for cxx, lab in zip(centres, ["Router 1", "Router 2", None, "Router 10"]):
         if lab is None:
-            text(slide, cx - bw / 2, by + Inches(0.2), bw, Inches(0.5), "· · ·", size=20,
+            text(slide, cxx - bw / 2, by + Inches(0.1), bw, Inches(0.4), "· · ·", size=16,
                  color=MUTED, align=PP_ALIGN.CENTER)
             continue
-        box_label(slide, cx - bw / 2, by, bw, bh, lab, "local traffic + training")
-        arrow(slide, cx - Inches(0.14), bus, cx - Inches(0.14), by, color=MUTED)
-        arrow(slide, cx + Inches(0.14), by, cx + Inches(0.14), bus, color=ACCENT)
-    text(slide, Inches(8.55), Inches(2.1), Inches(3.9), Inches(0.8),
-         [[("↓  global model sent down", {"color": INK_SOFT, "size": 11.5})],
-          [("↑  update sent up (weights only)", {"color": ACCENT, "size": 11.5})]],
-         spacing=1.4)
-    text(slide, LEFT, Inches(5.75), CONTENT_W, Inches(0.9),
-         "Each round: the server sends the current model, every router trains it on its own "
-         "traffic, and only the change in weights travels back. Raw traffic never leaves a "
-         "router.", size=13.5, color=INK_SOFT, align=PP_ALIGN.CENTER)
-    notes(slide, "Federated learning flips the flow. The server sends the model out; each "
-                 "router trains it locally and sends back only weight updates. In our project "
-                 "the clients are 10 real routers from the FLNET2023 dataset.")
+        box_label(slide, cxx - bw / 2, by, bw, bh, lab, fill=WHITE, size=10.5)
+        arrow(slide, cxx - Inches(0.1), bus, cxx - Inches(0.1), by, color=MUTED, weight=1)
+        arrow(slide, cxx + Inches(0.1), by, cxx + Inches(0.1), bus, color=ACCENT, weight=1)
+    text(slide, cx0, cy0 + Inches(2.75), cw, Inches(0.35),
+         [[("↓ global model     ", {"color": INK_SOFT}), ("↑ weight update only",
+                                                            {"color": ACCENT})]],
+         size=10.5, align=PP_ALIGN.CENTER)
 
+    rect(slide, LEFT, Inches(5.55), CONTENT_W, Inches(1.2), fill=ACCENT_SOFT, line=None,
+         radius=0.06)
+    text(slide, LEFT + Inches(0.3), Inches(5.55), CONTENT_W - Inches(0.6), Inches(1.2), [
+        [("Our approach  ", {"bold": True, "color": ACCENT}),
+         ("Krypsis builds security into the update protocol itself: every update carries an "
+          "integrity tag and a verifiable fingerprint, and suspicious updates are filtered "
+          "cheaply before aggregation.", {})],
+        [("Research question  ", {"bold": True, "color": ACCENT}),
+         ("Does one global anomaly threshold wrongly flag honest non-IID routers, and do "
+          "per-cluster (Mondrian) thresholds reduce those false alarms?", {})],
+    ], size=12, anchor=MSO_ANCHOR.MIDDLE, spacing=1.2)
+    notes(slide, "Detection needs varied traffic, but traffic is sensitive. Federated "
+                 "learning keeps traffic on the routers and only shares weight updates, as in "
+                 "the diagram. That moves the risk to the updates themselves: tampering, "
+                 "poisoning, and honest routers that simply look different. Krypsis protects "
+                 "the updates, and our research question asks whether one global threshold is "
+                 "unfair to unusual honest routers.")
 
-def s_gap(prs):
-    slide = base(prs, "01 · Introduction", "But the updates themselves become the attack surface")
-    cols = [
-        ("Tampering in transit", "An update can be corrupted or modified between router "
-         "and server. Generic transports (HTTP + JSON) carry no per-client integrity check."),
-        ("Poisoned updates", "A compromised router can train on wrong labels (label "
-         "flipping) or plant a hidden rule (backdoor) and send a valid-looking update."),
-        ("Honest but different", "Routers genuinely see different traffic (non-IID). "
-         "Outlier-based defenses can mistake an honest, unusual router for an attacker."),
-    ]
-    for i, (title, body) in enumerate(cols):
-        x = LEFT + i * Inches(3.97)
-        card(slide, x, Inches(2.05), Inches(3.75), Inches(2.55))
-        text(slide, x + Inches(0.3), Inches(2.3), Inches(3.2), Inches(0.4), f"0{i + 1}",
-             size=20, font=SERIF, color=ACCENT)
-        text(slide, x + Inches(0.3), Inches(2.8), Inches(3.2), Inches(1.75),
-             [[(title, {"bold": True, "size": 14})], [(body, {"size": 12, "color": INK_SOFT})]],
-             spacing=1.25)
-    text(slide, LEFT, Inches(4.95), CONTENT_W, Inches(0.35), "HOW IT IS USUALLY HANDLED",
-         size=11, bold=True, color=ACCENT)
-    bullets(slide, LEFT, Inches(5.35), CONTENT_W, Inches(1.5), [
-        ("Efficiency work", "(compression, client selection) shrinks updates but ignores security."),
-        ("Robust aggregation", "(Krum, trimmed mean) runs on the server after every update is "
-         "fully received — on every client, every round."),
-    ], size=13, gap=6)
-    notes(slide, "Federated learning removes the data-sharing problem but creates a new one: "
-                 "the updates. Three threats: tampering, poisoning, and the subtle one — honest "
-                 "routers that look unusual. Existing work treats efficiency and security "
-                 "separately, and robust aggregation is applied after everything is received.")
-
-
-def s_question(prs):
-    slide = base(prs, "01 · Introduction", "Research gap and question")
-    card(slide, LEFT, Inches(2.0), Inches(5.7), Inches(4.5), fill=WHITE)
-    text(slide, LEFT + Inches(0.35), Inches(2.25), Inches(5.0), Inches(0.35), "THE GAP",
-         size=11, bold=True, color=ACCENT)
-    text(slide, LEFT + Inches(0.35), Inches(2.7), Inches(5.0), Inches(3.7),
-         "Security and communication are designed separately. We fuse them into the update "
-         "protocol itself: every update carries an integrity tag and a compact statistical "
-         "fingerprint, so tampered or suspicious updates can be rejected cheaply — before the "
-         "expensive aggregation step.\n\nOutlier checks of this kind compare each update with "
-         "the consensus, which raises a fairness question for non-IID routers.",
-         size=13.5, color=INK, spacing=1.3)
-    rect(slide, Inches(6.9), Inches(2.0), Inches(5.63), Inches(4.5), fill=ACCENT_SOFT,
-         line=None, radius=0.04)
-    text(slide, Inches(7.25), Inches(2.25), Inches(5.0), Inches(0.35), "RESEARCH QUESTION",
-         size=11, bold=True, color=ACCENT)
-    text(slide, Inches(7.25), Inches(2.75), Inches(5.0), Inches(2.5),
-         "Does one global anomaly threshold wrongly flag honest, non-IID routers — and do "
-         "per-cluster (Mondrian) thresholds reduce those false alarms without missing real "
-         "attacks?", size=17, font=SERIF, color=INK, spacing=1.3)
-    text(slide, Inches(7.25), Inches(5.35), Inches(5.0), Inches(1.0),
-         "Mondrian calibration: one threshold per group of similar clients instead of one "
-         "for everyone — borrowed from conformal prediction.", size=11.5, color=INK_SOFT)
-    notes(slide, "Our gap: fuse integrity checking and cheap anomaly filtering into the "
-                 "protocol. Our research question tests whether a global threshold is unfair "
-                 "to unusual honest routers, and whether per-group thresholds fix it.")
-
-
-# ---- 02 Objectives
 
 def s_objectives(prs):
-    slide = base(prs, "02 · Objectives", "Five objectives")
+    slide = base(prs, "Objectives", "Objectives")
     objs = [
-        ("Federated detector", "Train one intrusion detector across distributed clients "
+        ("Federated detector", "Train one intrusion detector across 10 router clients "
          "without centralizing raw traffic.",
-         f"Met — FedAvg over 10 routers: {pct(R['fed_router']['accuracy'], 2)}"),
-        ("Security-fused protocol", "Design an update protocol with an integrity tag and a "
-         "fingerprint that filters bad updates before aggregation.",
-         "Met — HMAC + verifiable fingerprint + 3 anomaly scores"),
-        ("Detection quality", "Evaluate accuracy, precision, recall and F1 under federated "
-         "training.", "Met — binary and 11-class, two datasets"),
-        ("Communication & cost", "Measure the protocol's overhead and server cost against a "
-         "generic HTTP/JSON transfer.",
-         f"Met — +{pct(OVERHEAD, 2)} overhead; JSON is {JSON_X:.1f}× larger"),
-        ("Robustness & the research question", "Test non-IID clients, poisoning, dropout and "
-         "global vs Mondrian thresholds, with repeated seeds and significance tests.",
-         "Met — 235 federated runs; Mondrian not better"),
+         f"Met · FedAvg over 10 routers: {pct(R['fed_router']['accuracy'], 2)}"),
+        ("Security-fused protocol", "Design an update message with an integrity tag and a "
+         "fingerprint, and filter bad updates before aggregation.",
+         "Met · HMAC, verifiable fingerprint, 3 anomaly scores"),
+        ("Detection quality", "Measure accuracy, precision, recall and F1, for binary and "
+         "11-class detection.", "Met · two datasets, binary and 11-class"),
+        ("Communication cost", "Measure the protocol's overhead against a generic HTTP/JSON "
+         "transfer.", f"Met · +{pct(OVERHEAD, 2)} overhead; JSON is {JSON_X:.1f}× larger"),
+        ("Robustness and the research question", "Test poisoning, dropout, traffic shift and "
+         "global vs Mondrian thresholds, over repeated seeds with significance tests.",
+         "Met · 235 federated runs; Mondrian not better"),
     ]
-    y = Inches(1.95)
     for i, (name, desc, status) in enumerate(objs):
-        ry = y + i * Inches(0.95)
+        ry = Inches(1.95) + i * Inches(0.95)
         text(slide, LEFT, ry, Inches(0.6), Inches(0.6), str(i + 1), size=24, font=SERIF,
              color=ACCENT)
         text(slide, LEFT + Inches(0.6), ry + Inches(0.02), Inches(6.9), Inches(0.9),
@@ -481,418 +440,290 @@ def s_objectives(prs):
         if i < len(objs) - 1:
             hrule(slide, LEFT + Inches(0.6), ry + Inches(0.88), Inches(11.1), color=LINE,
                   weight=0.5)
-    notes(slide, "Five objectives, each with how far it was met. The right column is the "
-                 "evidence; every number comes from our results files.")
+    notes(slide, "Five objectives. The right column shows how far each was met; every number "
+                 "comes from our result files.")
 
 
-def s_scope(prs):
-    slide = base(prs, "02 · Objectives", "Scope and assumptions")
-    text(slide, LEFT, Inches(2.0), Inches(5.6), Inches(0.35), "IN SCOPE", size=11, bold=True,
-         color=ACCENT)
-    bullets(slide, LEFT, Inches(2.45), Inches(5.6), Inches(4.2), [
-        "Simulated federation on recorded router traffic (FLNET2023), repeated on NSL-KDD",
-        "Binary (normal vs attack) and 11-class detection",
-        "Integrity tag, fingerprint, anomaly filter, second check, weight cap",
-        "Attacks: tampering, label flipping, backdoor; client dropout; traffic shift",
-        "Repeated seeds with paired t-tests",
-    ], size=14, gap=12)
-    text(slide, Inches(7.0), Inches(2.0), Inches(5.5), Inches(0.35), "ASSUMPTIONS & LIMITS",
-         size=11, bold=True, color=BRONZE)
-    bullets(slide, Inches(7.0), Inches(2.45), Inches(5.5), Inches(4.2), [
-        "Clients and server run in one process — no real network deployment",
-        "Each client shares a pre-distributed secret key with the server",
-        "The first 5 rounds are clean and used to calibrate thresholds",
-        "FLNET2023 is emulated (CORE): its binary task is unusually easy",
-        "Attackers control at most 20% of clients and do not adapt to the filter",
-    ], size=14, gap=12)
-    notes(slide, "Be explicit about what was and was not done. In particular: everything is "
-                 "simulated in one process, keys are pre-shared, and the attackers are not "
-                 "adaptive. These are the honest limits of the evaluation.")
-
-
-# ---- 03 Methodology
-
-def s_architecture(prs):
-    slide = base(prs, "03 · Methodology", "System architecture")
-    y, h = Inches(2.55), Inches(1.35)
+def s_method_system(prs):
+    slide = base(prs, "Methodology · 1 / 4", "System architecture and data")
+    y, h = Inches(1.95), Inches(1.15)
     blocks = [
-        (LEFT, Inches(2.15), "Router client", "local flows → local training → update Δw"),
-        (Inches(3.35), Inches(2.25), "Krypsis message", "header · fingerprint · payload · HMAC"),
-        (Inches(6.05), Inches(3.2), "Server checks", "verify tag → verify fingerprint → "
-         "score → threshold → second check"),
-        (Inches(9.7), Inches(2.0), "Capped FedAvg", "weighted average, ≤ 15% per client"),
+        (LEFT, Inches(2.2), "Router client", "local flows → local training → update Δw"),
+        (Inches(3.4), Inches(2.4), "Krypsis message", "header · fingerprint · payload · HMAC"),
+        (Inches(6.2), Inches(3.1), "Server checks", "verify tag and fingerprint → score → "
+         "threshold → second check"),
+        (Inches(9.7), Inches(2.83), "Capped FedAvg", "weighted average, ≤ 15% per client"),
     ]
     for i, (x, w, title, body) in enumerate(blocks):
         accent = i in (1, 2)
         box_label(slide, x, y, w, h, title, body, fill=ACCENT_SOFT if accent else WHITE,
-                  line=ACCENT if accent else LINE, title_color=ACCENT if accent else INK)
+                  line=ACCENT if accent else LINE, title_color=ACCENT if accent else INK,
+                  size=12)
         if i < len(blocks) - 1:
             nx = blocks[i + 1][0]
             arrow(slide, x + w + Inches(0.03), y + h / 2, nx - Inches(0.03), y + h / 2,
                   color=ACCENT)
-    ax1, ax2 = Inches(6.75), Inches(8.55)
-    for x in (ax1, ax2):
-        arrow(slide, x, y, x, y - Inches(0.42), color=BRONZE)
-    text(slide, ax1 - Inches(2.9), y - Inches(0.62), Inches(2.8), Inches(0.3),
-         "rejected: tag or fingerprint mismatch", size=10, color=BRONZE, align=PP_ALIGN.RIGHT)
-    text(slide, ax2 + Inches(0.1), y - Inches(0.62), Inches(2.8), Inches(0.3),
-         "flagged → second check", size=10, color=BRONZE)
-    loop_y = y + h + Inches(0.45)
-    rx, fx = LEFT + Inches(1.07), Inches(10.7)
+    loop_y = y + h + Inches(0.35)
+    rx, fx = LEFT + Inches(1.1), Inches(11.1)
     hrule(slide, rx, loop_y, fx - rx, color=MUTED, weight=1)
     arrow(slide, fx, y + h, fx, loop_y, color=MUTED)
     arrow(slide, rx, loop_y, rx, y + h, color=MUTED)
-    text(slide, Inches(4.4), loop_y + Inches(0.08), Inches(4.6), Inches(0.3),
-         "new global model sent to every router — next round", size=10.5, color=INK_SOFT,
+    text(slide, Inches(4.4), loop_y + Inches(0.06), Inches(4.6), Inches(0.3),
+         "new global model sent to every router, next round", size=10.5, color=INK_SOFT,
          align=PP_ALIGN.CENTER)
-    cols = [
-        ("ON THE ROUTER", "Trains on its own flows and wraps the weight change in a Krypsis "
-                          "message. Raw traffic never leaves."),
-        ("ON THE WIRE", "Header, fingerprint, update and HMAC tag — 0.67% larger than the "
-                        "bare update."),
-        ("ON THE SERVER", "Checks, scores and filters every update before averaging — it sees "
-                          "updates and fingerprints, never traffic."),
-    ]
-    hrule(slide, LEFT, Inches(5.25), CONTENT_W)
-    for i, (title, body) in enumerate(cols):
-        x = LEFT + i * Inches(3.97)
-        text(slide, x, Inches(5.45), Inches(3.7), Inches(1.3),
-             [[(title, {"bold": True, "size": 10.5, "color": ACCENT})],
-              [(body, {"size": 12, "color": INK_SOFT})]], spacing=1.25)
-    notes(slide, "One round, left to right: the router trains locally and wraps its update in "
-                 "a Krypsis message; the server verifies it, scores it, filters it, and "
-                 "averages the accepted updates with a per-client cap. The new model goes back "
-                 "to every router.")
+
+    hrule(slide, LEFT, Inches(4.05), CONTENT_W)
+    label(slide, LEFT, Inches(4.2), Inches(5.6), "Dataset · FLNET2023 (Kumar et al., 2023)")
+    bullets(slide, LEFT, Inches(4.6), Inches(5.6), Inches(2.3), [
+        ("10 routers = 10 clients.", "Flows recorded at 10 routers of an emulated 40-node "
+         "network; each router has its own attack mix (real non-IID)."),
+        ("11 traffic types:", "normal, 4 DDoS, 2 DoS, 3 web attacks, MITM."),
+        ("564,007 train / 79,491 test flows,", "66 features after preprocessing."),
+        ("NSL-KDD", "used as a second dataset to repeat the protocol results."),
+    ], size=11.5, gap=4)
+
+    # Attack share per router: shows how uneven the clients are.
+    label(slide, Inches(6.95), Inches(4.2), Inches(5.6), "Attack share of each router's traffic")
+    base_y, max_h = Inches(6.55), Inches(1.55)
+    bw, step = Inches(0.36), Inches(0.555)
+    for i, (r, n, a, _) in enumerate(ROUTERS):
+        x = Inches(7.0) + i * step
+        bh = max_h * a / 100
+        rect(slide, x, base_y - bh, bw, bh, fill=ACCENT,
+             line=None)
+        text(slide, x - Inches(0.1), base_y - bh - Inches(0.24), bw + Inches(0.2), Inches(0.22),
+             f"{a:.0f}", size=8.5, color=INK_SOFT, align=PP_ALIGN.CENTER)
+        text(slide, x - Inches(0.1), base_y + Inches(0.04), bw + Inches(0.2), Inches(0.22),
+             f"R{r}", size=8.5, color=MUTED, align=PP_ALIGN.CENTER)
+    hrule(slide, Inches(6.95), base_y, Inches(5.55), color=INK_SOFT, weight=0.75)
+    notes(slide, "One round, left to right: the router trains on its own flows and wraps "
+                 "the weight change in a Krypsis message; the server verifies, scores and "
+                 "filters it, then averages the accepted updates with a 15% cap per client. "
+                 "The data is FLNET2023, made for federated intrusion detection: the bars show "
+                 "how uneven the routers are, from 19% attack traffic at router 3 to 92% at "
+                 "router 4.")
 
 
-def s_dataset(prs):
-    slide = base(prs, "03 · Methodology", "Data: FLNET2023 — ten routers, ten clients")
-    text(slide, LEFT, Inches(1.85), Inches(4.4), Inches(4.8), [
-        [("FLNET2023", {"bold": True, "size": 14})],
-        [("Kumar et al., MILCOM 2023. Flows recorded at 10 routers of a 40-node network "
-          "emulated with CORE; 83 CICFlowMeter features per flow.", {"size": 12,
-                                                                     "color": INK_SOFT})],
-        [("", {})],
-        [("11 traffic types", {"bold": True, "size": 14})],
-        [("Normal; DDoS bot / dyn / stomp / tcp; DoS hulk / slowhttp; Web SQLi / XSS / "
-          "command injection; Infiltration MITM.", {"size": 12, "color": INK_SOFT})],
-        [("", {})],
-        [("Why this dataset", {"bold": True, "size": 14})],
-        [("Each router is a natural client with its own uneven attack mix — real non-IID "
-          "data, not a simulated split.", {"size": 12, "color": INK_SOFT})],
-        [("", {})],
-        [("Second dataset: NSL-KDD", {"bold": True, "size": 14})],
-        [("Classic benchmark; 10 clients by Dirichlet split. Used to replicate the protocol "
-          "results on a harder task.", {"size": 12, "color": INK_SOFT})],
-    ], spacing=1.2)
-    rows = [["Router", "Flows", "Attack %", "Attack types seen"]]
-    rows += [[str(r), f"{n:,}", f"{a:.1f}%", t] for r, n, a, t in ROUTERS]
-    table(slide, Inches(5.55), Inches(1.95), [Inches(0.8), Inches(1.05), Inches(1.05),
-                                              Inches(4.1)], rows, size=11, row_h=Inches(0.42))
-    text(slide, Inches(5.55), Inches(6.65), Inches(7), Inches(0.3),
-         "Training flows after 10% sampling; all ten routers also carry normal traffic.",
-         size=10, color=MUTED)
-    notes(slide, "FLNET2023 was built for federated intrusion detection: 10 routers, each "
-                 "seeing a different mix. Router 3 is mostly normal; router 4 is 92% attack; "
-                 "router 10 is a quarter of all data. NSL-KDD is our second dataset.")
+def s_method_data_model(prs):
+    slide = base(prs, "Methodology · 2 / 4", "Preprocessing and model")
+    colw = Inches(5.75)
+    rx = LEFT + colw + Inches(0.23)
+    label(slide, LEFT, Inches(1.95), colw, "Preprocessing")
+    text(slide, LEFT, Inches(2.25), colw, Inches(0.6),
+         "Tag each flow with its router · sample 10% per file · drop identifiers · drop "
+         "inf/NaN rows and constant columns · signed log, then min-max to [0, 1]",
+         size=11, color=INK_SOFT, spacing=1.15)
+    code(slide, LEFT, Inches(2.95), colw, Inches(3.4), '''
+        DROP_COLUMNS = ["src_ip", "dst_ip", "src_port", "timestamp"]
+
+        def sample_file(path, rng):          # 10%, at least 2,000 rows
+            df = pd.read_csv(path, low_memory=False)
+            keep = min(len(df), max(2000, round(len(df) * 0.10)))
+            ...
+        df["router"] = int(ROUTER_PATTERN.search(name).group(1))
+
+        features = features.replace([np.inf, -np.inf], np.nan)
+        df = df.loc[~features.isna().any(axis=1)]
+
+        def signed_log1p(x):                 # values span 1 to 1e9
+            return np.sign(x) * np.log1p(np.abs(x))
+
+        scaler = MinMaxScaler()              # fitted on TRAIN only
+        X_train = scaler.fit_transform(signed_log1p(train))
+        X_test = np.clip(scaler.transform(signed_log1p(test)), 0, 1)
+    ''', "src/preprocess.py  (excerpt)", size=9)
+    text(slide, LEFT, Inches(6.45), colw, Inches(0.4),
+         "IPs, ports and timestamps are dropped so the model learns behaviour, not which "
+         "machine attacked.", size=10.5, color=MUTED)
+
+    label(slide, rx, Inches(1.95), colw, "Model")
+    text(slide, rx, Inches(2.25), colw, Inches(0.6),
+         "MLP 66 → 256 → 128 → 64 → 1 · 58,369 parameters · Adam, binary cross-entropy · "
+         "11-class version ends in softmax",
+         size=11, color=INK_SOFT, spacing=1.15)
+    code(slide, rx, Inches(2.95), colw, Inches(3.4), '''
+        def build_model(input_dim):
+            l2 = tf.keras.regularizers.l2(1e-4)
+            model = tf.keras.Sequential([
+                layers.Input(shape=(input_dim,)),
+                layers.Dense(256, activation="relu", kernel_regularizer=l2),
+                layers.Dropout(0.3),
+                layers.Dense(128, activation="relu", kernel_regularizer=l2),
+                layers.Dropout(0.3),
+                layers.Dense(64, activation="relu", kernel_regularizer=l2),
+                layers.Dropout(0.2),
+                layers.Dense(1, activation="sigmoid"),
+            ])
+            model.compile(optimizer="adam",
+                          loss="binary_crossentropy",
+                          metrics=["accuracy"])
+            return model
+    ''', "src/model.py  (layers = tf.keras.layers)", size=9)
+    text(slide, rx, Inches(6.45), colw, Inches(0.4),
+         "Fixed seeds and single-threaded ops make every run repeatable.",
+         size=10.5, color=MUTED)
+    notes(slide, "Left: preprocessing. Each CSV is tagged with its router number, sampled to "
+                 "10%, cleaned, and scaled with a signed log and min-max; the scaler is fitted "
+                 "on training data only. We drop IPs, the source port and timestamps so the "
+                 "model cannot memorise the attacker's address. Right: the model, a small "
+                 "multilayer perceptron with dropout and L2, which suits tabular flow features "
+                 "and averages cleanly under FedAvg.")
 
 
-def s_preprocess(prs):
-    slide = base(prs, "03 · Methodology", "Preprocessing")
-    steps = [
-        ("Load & tag", "Each CSV is tagged with its router number, read from the file name. "
-                       "The separate TEST capture is the test set."),
-        ("Sample", "Each file sampled to 10% (minimum 2,000 rows) — 4.8 M flows is too many "
-                   "for repeated federated runs; router proportions are kept."),
-        ("Remove identifiers", "src_ip, dst_ip, src_port, timestamp dropped so the model "
-                               "learns behaviour, not who the attacker is."),
-        ("Clean", "Rows with inf / NaN values dropped (none remained after sampling); "
-                  "12 constant columns removed."),
-        ("Scale", "Signed log(1+x), then min-max to [0, 1], fitted on training data only."),
-    ]
-    for i, (name, body) in enumerate(steps):
-        y = Inches(1.95) + i * Inches(0.82)
-        rect(slide, LEFT, y + Inches(0.06), Inches(0.42), Inches(0.42), fill=ACCENT_SOFT,
-             line=None, radius=0.5)
-        text(slide, LEFT, y + Inches(0.06), Inches(0.42), Inches(0.42), str(i + 1), size=12,
-             bold=True, color=ACCENT, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
-        text(slide, LEFT + Inches(0.65), y, Inches(6.6), Inches(0.8),
-             [[(name, {"bold": True, "size": 13.5})], [(body, {"size": 11.5, "color": INK_SOFT})]],
-             spacing=1.15)
-    card(slide, Inches(8.4), Inches(1.95), Inches(4.13), Inches(4.2), fill=WHITE)
-    text(slide, Inches(8.7), Inches(2.2), Inches(3.6), Inches(0.35), "RESULT", size=11,
-         bold=True, color=ACCENT)
-    for i, (num, lab) in enumerate([("66", "features per flow"), ("564,007", "training flows"),
-                                    ("79,491", "test flows"), ("10", "router clients")]):
-        y = Inches(2.65) + i * Inches(0.85)
-        text(slide, Inches(8.7), y, Inches(3.6), Inches(0.8),
-             [[(num, {"size": 22, "font": SERIF, "color": INK})],
-              [(lab, {"size": 11, "color": INK_SOFT})]], spacing=1.0)
-    notes(slide, "Five steps. The important design choice is removing IP addresses, the "
-                 "source port and timestamps — otherwise the model could memorise which "
-                 "machine is the attacker instead of learning what attacks look like.")
-
-
-def s_model(prs):
-    slide = base(prs, "03 · Methodology", "Model and training")
-    layers = [("Input", "66"), ("Dense", "256"), ("Dense", "128"), ("Dense", "64"),
-              ("Output", "1 · sigmoid")]
-    bw, gap = Inches(1.7), Inches(0.62)
-    x0, y0 = LEFT + Inches(0.1), Inches(2.15)
-    for i, (kind, size_) in enumerate(layers):
-        x = x0 + i * (bw + gap)
-        box_label(slide, x, y0, bw, Inches(0.95), size_, kind,
-                  fill=ACCENT_SOFT if 0 < i < 4 else WHITE,
-                  line=ACCENT if 0 < i < 4 else LINE, title_color=INK, size=14)
-        if i < len(layers) - 1:
-            arrow(slide, x + bw + Inches(0.04), y0 + Inches(0.475), x + bw + gap - Inches(0.04),
-                  y0 + Inches(0.475), color=MUTED)
-    text(slide, x0, y0 + Inches(1.05), Inches(11.5), Inches(0.35),
-         "ReLU, dropout 0.3 / 0.3 / 0.2, L2 weight decay · 58,369 parameters · 11-class "
-         "variant uses a softmax output", size=11.5, color=INK_SOFT, align=PP_ALIGN.CENTER)
-    cols = [
-        ("Centralized baseline", [
-            "All training data in one place",
-            "Stratified 90 / 10 validation split",
-            "Class weights, early stopping",
-            "Decision threshold tuned on validation",
-        ]),
-        ("Federated (FedAvg)", [
-            "10 router clients, one model each round",
-            "Phase 6: 15 rounds × 2 local epochs",
-            "Attack runs: 12 rounds × 1 epoch",
-            "Average weighted by client data size",
-        ]),
-        ("Reproducibility", [
-            "Fixed seeds for NumPy, Python, TensorFlow",
-            "Single-threaded ops (deterministic)",
-            "Same seed = same attackers and init",
-            "Every number from results/*.json",
-        ]),
-    ]
-    for i, (title, items) in enumerate(cols):
-        x = LEFT + i * Inches(3.97)
-        card(slide, x, Inches(3.95), Inches(3.75), Inches(2.75))
-        text(slide, x + Inches(0.3), Inches(4.15), Inches(3.2), Inches(0.35), title,
-             size=13.5, bold=True)
-        bullets(slide, x + Inches(0.3), Inches(4.6), Inches(3.25), Inches(2.0), items,
-                size=11.5, gap=4)
-    notes(slide, "A standard multilayer perceptron — the right tool for tabular flow "
-                 "features, and it averages cleanly under FedAvg. Centralized training is our "
-                 "upper bound; federated training is the real system.")
-
-
-def s_message(prs):
-    slide = base(prs, "03 · Methodology", "The Krypsis update message")
+def s_method_protocol(prs):
+    slide = base(prs, "Methodology · 3 / 4", "Federated round and the Krypsis message")
     parts = [("Length", "4 B", Inches(1.25), BG_DEEP),
-             ("Header + fingerprint", "client · round · sample count · L2 norm · 4 layer "
-              "norms · 64-number sketch", Inches(4.0), ACCENT_SOFT),
-             ("Payload", f"model update Δw · {COMM['raw_payload_bytes']:,} B (float32)",
-              Inches(4.45), WHITE),
-             ("Tag", "HMAC-SHA256 · 32 B", Inches(2.03), BRONZE_SOFT)]
+             ("Header + fingerprint", "client · round · samples · L2 norm · layer norms · "
+              "64-number sketch", Inches(4.3), ACCENT_SOFT),
+             ("Payload", f"update Δw · {COMM['raw_payload_bytes']:,} B (float32)",
+              Inches(3.9), WHITE),
+             ("Tag", "HMAC-SHA256 · 32 B", Inches(2.28), BRONZE_SOFT)]
     x = LEFT
     for name, body, w, fill in parts:
-        rect(slide, x, Inches(2.05), w, Inches(1.15), fill=fill, line=LINE)
-        text(slide, x + Inches(0.15), Inches(2.15), w - Inches(0.3), Inches(1.0),
-             [[(name.upper(), {"bold": True, "size": 10.5, "color": ACCENT})],
-              [(body, {"size": 11.5, "color": INK})]], spacing=1.2)
+        rect(slide, x, Inches(1.95), w, Inches(0.85), fill=fill, line=LINE)
+        text(slide, x + Inches(0.15), Inches(2.03), w - Inches(0.3), Inches(0.75),
+             [[(name.upper(), {"bold": True, "size": 10, "color": ACCENT})],
+              [(body, {"size": 11, "color": INK})]], spacing=1.15)
         x += w
-    cols = [
-        ("Integrity tag", "HMAC over header and payload with a key shared only by that "
-                          "router and the server. One changed byte → rejected."),
-        ("Fingerprint", "A compact summary: the update's size overall and per layer, plus a "
-                        "random projection (sketch) that preserves its direction."),
-        ("Verifiable", "The server recomputes the fingerprint from the payload — a client "
-                       "cannot send an innocent-looking fake."),
-    ]
-    for i, (title, body) in enumerate(cols):
-        x = LEFT + i * Inches(3.97)
-        text(slide, x, Inches(3.6), Inches(3.7), Inches(1.6),
-             [[(title, {"bold": True, "size": 14})], [(body, {"size": 12, "color": INK_SOFT})]],
-             spacing=1.25)
-    hrule(slide, LEFT, Inches(5.35), CONTENT_W)
-    stats = [(f"+{COMM['krypsis_overhead_bytes']:,} B", f"overhead per update ({pct(OVERHEAD, 2)})"),
-             (f"{COMM['http_json_bytes'] / 1000:,.0f} KB", f"same update as HTTP/JSON ({JSON_X:.1f}×)"),
-             ("~2 ms", "verification per message")]
-    for i, (num, lab) in enumerate(stats):
-        x = LEFT + i * Inches(3.97)
-        text(slide, x, Inches(5.55), Inches(3.7), Inches(1.0),
-             [[(num, {"size": 22, "font": SERIF})], [(lab, {"size": 11, "color": INK_SOFT})]],
-             spacing=1.05)
-    notes(slide, "Every update is wrapped like this. The tag catches tampering; the "
-                 "fingerprint lets the server judge the update cheaply; and because the server "
-                 "recomputes it, a cheating client cannot fake it. All of this costs well under "
-                 "one percent of the message size.")
+
+    colw = Inches(5.75)
+    rx = LEFT + colw + Inches(0.23)
+    code(slide, LEFT, Inches(3.05), colw, Inches(3.3), '''
+        for rnd in range(1, ROUNDS + 1):
+            for c in clients:                # on each router
+                local.set_weights(unflatten(g, like))
+                local.fit(X[a == c], y[a == c], epochs=1,
+                          batch_size=256)
+                d = flatten(local.get_weights()) - g    # update Δw
+                msg = pack(c, rnd, n[c], d, keys[c], fp)  # → server
+                header, d, reason = unpack(msg, keys, fp)
+            ...                              # score, filter (next slide)
+            w = capped_weights(counts, 1.5)
+            g = g + sum(accepted[c] * w[c] for c in accepted)
+    ''', "src/demo.py  ·  one federated round", size=9)
+    code(slide, rx, Inches(3.05), colw, Inches(3.3), '''
+        def compute(self, delta):            # the fingerprint
+            return {"l2": norm(delta),
+                    "layer_l2": [norm(delta[s]) for s in self.layer_slices],
+                    "sketch": (self.projection @ delta).tolist()}
+
+        def pack(client_id, round_num, num_samples, delta, key, fp):
+            header = json.dumps({"client": client_id, "round": round_num,
+                                 "n": num_samples, "fp": fp.compute(delta)},
+                                separators=(",", ":")).encode()
+            payload = delta.astype(np.float32).tobytes()
+            tag = hmac.new(key, header + payload, hashlib.sha256).digest()
+            return len(header).to_bytes(4, "big") + header + payload + tag
+    ''', "src/protocol.py  (excerpt)", size=9)
+    text(slide, LEFT, Inches(6.45), CONTENT_W, Inches(0.4),
+         f"The sketch is a fixed random projection (public seed 2023) of the update to 64 "
+         f"numbers. Whole message: +{COMM['krypsis_overhead_bytes']:,} B "
+         f"({pct(OVERHEAD, 2)}) over the bare update.", size=10.5, color=MUTED)
+    notes(slide, "The strip on top is one message on the wire. Left: one federated round. "
+                 "Each router starts from the global model g, trains one epoch on its own "
+                 "flows, computes its update d, and packs it. The server unpacks, filters, and "
+                 "averages with capped weights. Right: pack builds the header with the "
+                 "fingerprint (overall size, size per layer, and a 64-number sketch), appends "
+                 "the raw float32 update, and signs everything with HMAC-SHA256 using the "
+                 "router's own key.")
 
 
-def s_server(prs):
-    slide = base(prs, "03 · Methodology", "Server decision pipeline")
-    steps = [
-        ("Verify tag", "HMAC mismatch → reject", BRONZE),
-        ("Verify fingerprint", "Recomputed ≠ claimed → reject", BRONZE),
-        ("Score", "Size, direction vs. consensus, change vs. own last update", ACCENT),
-        ("Standardize", "Robust z-score within the round (median / MAD)", ACCENT),
-        ("Threshold", "Conformal quantile from 5 clean rounds — global or Mondrian", ACCENT),
-        ("Second check", "Flagged update rescued if close to a trimmed-mean reference", ACCENT),
-        ("Aggregate", "FedAvg on accepted updates, ≤ 15% weight per client", INK),
-    ]
-    for i, (name, body, color) in enumerate(steps):
-        y = Inches(1.95) + i * Inches(0.66)
-        rect(slide, LEFT, y, Inches(0.08), Inches(0.5), fill=color, line=None)
-        text(slide, LEFT + Inches(0.3), y, Inches(2.4), Inches(0.5), name, size=13.5,
-             bold=True, anchor=MSO_ANCHOR.MIDDLE)
-        text(slide, LEFT + Inches(2.7), y, Inches(4.5), Inches(0.5), body, size=12,
-             color=INK_SOFT, anchor=MSO_ANCHOR.MIDDLE)
-    card(slide, Inches(8.3), Inches(1.95), Inches(4.23), Inches(4.55), fill=WHITE)
-    text(slide, Inches(8.6), Inches(2.2), Inches(3.7), Inches(4.2), [
-        [("WHY STANDARDIZE PER ROUND", {"bold": True, "size": 11, "color": ACCENT})],
-        [("Our first design used fixed thresholds. Once training converged every honest "
-          "update became small and noisy, and 65–96% of honest updates were flagged.",
-          {"size": 12})],
-        [("", {})],
-        [("Scoring each update relative to the other clients in the same round fixed it — "
-          "kept as a documented negative result.", {"size": 12, "color": INK_SOFT})],
-        [("", {})],
-        [("GLOBAL vs MONDRIAN", {"bold": True, "size": 11, "color": ACCENT})],
-        [("Global: one threshold for all clients. Mondrian: clients clustered by their "
-          "calibration sketches (k-means, k = 3), one threshold per cluster.", {"size": 12})],
-    ], spacing=1.2)
-    notes(slide, "Seven steps. The first two are hard checks — reject. Then three cheap "
-                 "scores, standardized within the round, compared to calibrated thresholds. "
-                 "Flagged updates get a second, more careful check instead of being thrown "
-                 "away. The global-versus-Mondrian choice is our research question.")
+def s_method_server(prs):
+    slide = base(prs, "Methodology · 4 / 4", "Server checks before aggregation")
+    steps = [("Verify tag", "reject", BRONZE), ("Verify fingerprint", "reject", BRONZE),
+             ("Score", "3 scores", ACCENT), ("Standardize", "robust z", ACCENT),
+             ("Threshold", "conformal", ACCENT), ("Second check", "trimmed mean", ACCENT),
+             ("Capped FedAvg", "≤ 15% each", INK)]
+    sw, gap = Inches(1.5), Inches(0.205)
+    for i, (name, sub, color) in enumerate(steps):
+        x = LEFT + i * (sw + gap)
+        rect(slide, x, Inches(1.95), sw, Inches(0.7), fill=WHITE, line=LINE, radius=0.1)
+        rect(slide, x, Inches(1.95), sw, Inches(0.05), fill=color, line=None)
+        text(slide, x, Inches(1.95), sw, Inches(0.7),
+             [[(name, {"bold": True, "size": 10.5})], [(sub, {"size": 9.5, "color": INK_SOFT})]],
+             align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, spacing=1.05)
+        if i < len(steps) - 1:
+            arrow(slide, x + sw + Inches(0.02), Inches(2.3), x + sw + gap - Inches(0.02),
+                  Inches(2.3), color=MUTED, weight=1)
+
+    colw = Inches(5.75)
+    rx = LEFT + colw + Inches(0.23)
+    code(slide, LEFT, Inches(2.9), colw, Inches(3.45), '''
+        def unpack(message, keys, fp):
+            ...                              # split header/payload/tag
+            expected = hmac.new(key, header_bytes + payload,
+                                hashlib.sha256).digest()
+            if not hmac.compare_digest(tag, expected):
+                return header, None, "bad_tag"      # tampered
+            delta = np.frombuffer(payload, dtype=np.float32)
+            actual = fp.compute(delta)       # recompute, never trust
+            if not np.allclose(actual["sketch"], header["fp"]["sketch"],
+                               rtol=1e-3, atol=1e-5):
+                return header, None, "fingerprint_mismatch"
+            return header, delta, None
+    ''', "src/protocol.py  ·  step 1-2", size=9)
+    code(slide, rx, Inches(2.9), colw, Inches(3.45), '''
+        consensus = np.median(sketches, axis=0)    # attackers can't drag it
+        scores[c] = {
+            "norm": abs(log(l2[c] / median_norm)),
+            "consensus": 1 - cosine(sketch[c], consensus),
+            "history": 1 - cosine(sketch[c], prev_sketch[c]),
+        }
+        z = (score - median) / (1.4826 * MAD)      # within this round
+        flagged = any(z[s] > threshold[s] for s in SCORE_NAMES)
+        # threshold = ceil((n+1)(1-alpha))-th calibration score, alpha=0.05
+
+        rescued = second_check(passed, flagged, 0.2)
+        w = capped_weights(counts, 1.5)             # 1.5 x 1/10 = 15%
+    ''', "src/protocol.py  ·  steps 3-7 (condensed)", size=9)
+    text(slide, LEFT, Inches(6.45), CONTENT_W, Inches(0.4),
+         "Thresholds come from 5 clean calibration rounds: one for all clients (global), or "
+         "one per k-means cluster of similar clients (Mondrian, k = 3).",
+         size=10.5, color=MUTED)
+    notes(slide, "Seven steps. Left: the hard checks. A wrong HMAC means the message was "
+                 "changed in transit; the server also recomputes the fingerprint from the "
+                 "payload, so a client cannot send a fake innocent-looking one. Right: three "
+                 "cheap scores from the fingerprint only: is the update unusually large or "
+                 "small, does it point away from the median of the other routers, and does it "
+                 "differ from this router's last update. Scores are standardized within the "
+                 "round, compared with conformal thresholds, flagged updates get a second "
+                 "check against a trimmed mean, and no client gets more than 15% of the "
+                 "average.")
 
 
-def s_design(prs):
-    slide = base(prs, "03 · Methodology", "Threat model and experiment design")
-    text(slide, LEFT, Inches(1.95), Inches(5.6), Inches(0.35), "ATTACKS", size=11, bold=True,
-         color=ACCENT)
-    bullets(slide, LEFT, Inches(2.4), Inches(5.6), Inches(2.6), [
-        ("Tampering —", "one byte of an honest message flipped in transit."),
-        ("Label flipping —", "2 of 10 clients train on inverted labels."),
-        ("Backdoor —", "2 clients add one attack type labelled normal."),
-        ("Stress —", "client dropout (0–40%), traffic shift, 10–40 clients."),
-    ], size=12.5, gap=7)
-    text(slide, LEFT, Inches(4.75), Inches(5.6), Inches(0.35), "METRICS", size=11, bold=True,
-         color=ACCENT)
-    bullets(slide, LEFT, Inches(5.2), Inches(5.6), Inches(1.6), [
-        "Accuracy, precision, recall, F1, macro-F1",
-        "Poisoned updates caught · honest updates wrongly excluded",
-        "Backdoor success rate · bytes per message · server ms per round",
-    ], size=12.5, gap=5)
-    rows = [["Experiment", "Compared", "Runs"],
-            ["Protocol (Ph. 8)", "none · global · Mondrian", "45"],
-            ["Defenses (Ph. 9)", "none · v1 · v2 · v2-Mondrian", "120"],
-            ["Robustness (Ph. 11)", "dropout · shift · scale", "70"],
-            ["Multi-class (Ph. 10)", "central · IID · routers", "3"]]
-    table(slide, Inches(6.95), Inches(2.0), [Inches(2.15), Inches(2.75), Inches(0.68)], rows,
-          size=12, row_h=Inches(0.5))
-    text(slide, Inches(6.95), Inches(4.75), Inches(5.6), Inches(1.8), [
-        [("STATISTICS", {"bold": True, "size": 11, "color": ACCENT})],
-        [("Every setting repeated over random seeds (5–15). Policies compared on the same "
-          "seeds — same attackers, same initial model — with paired t-tests; p < 0.05 counts "
-          "as significant.", {"size": 12.5, "color": INK})],
-    ], spacing=1.25)
-    notes(slide, "We attack our own system four ways and measure detection, false alarms, "
-                 "accuracy and cost. Every comparison is paired by seed so differences are "
-                 "not just luck, and we report p-values.")
-
-
-# ---- 04 Results
-
-def s_baseline(prs):
-    slide = base(prs, "04 · Results", "Baseline detection — and why we did not stop there")
+def s_results_detection(prs):
+    slide = base(prs, "Results · 1 / 2", "Detection: binary is easy, naming the attack is not")
+    colw = Inches(4.35)
+    label(slide, LEFT, Inches(1.95), colw, "Binary accuracy · FLNET2023 test set")
     stats = [(pct(R["central"]["accuracy"]), "centralized"),
              (pct(R["fed_router"]["accuracy"], 2), "FedAvg · 10 real routers"),
              (pct(R["fed_iid"]["accuracy"], 3), "FedAvg · IID split")]
     for i, (num, lab) in enumerate(stats):
-        x = LEFT + i * Inches(3.0)
-        text(slide, x, Inches(2.0), Inches(2.9), Inches(1.1),
-             [[(num, {"size": 30, "font": SERIF})], [(lab, {"size": 11.5, "color": INK_SOFT})]],
-             spacing=1.05)
-    text(slide, LEFT, Inches(3.35), Inches(8.8), Inches(0.6),
-         "Binary normal-vs-attack accuracy on FLNET2023's separate TEST capture (79,491 flows).",
-         size=12.5, color=INK_SOFT)
-    rect(slide, LEFT, Inches(4.15), CONTENT_W, Inches(2.45), fill=BRONZE_SOFT, line=None,
-         radius=0.04)
-    text(slide, LEFT + Inches(0.35), Inches(4.35), Inches(11), Inches(2.2), [
-        [("WE CHECKED THE 100% INSTEAD OF TRUSTING IT", {"bold": True, "size": 11,
-                                                         "color": BRONZE})],
-        [("Identifiers were already removed. Yet a single threshold on one feature (forward "
-          "packet count) scores 97.5%, a depth-2 decision tree 99.2%, and a depth-3 tree "
-          "99.99%.", {"size": 13.5})],
-        [("The emulated traffic is simply very easy to separate. So binary accuracy cannot "
-          "show differences between setups — we added 11-class detection, and judged the "
-          "protocol by how attacks change accuracy.", {"size": 13.5, "color": INK_SOFT})],
-    ], spacing=1.3)
-    notes(slide, "Federated training matches centralized training almost exactly. But a "
-                 "perfect score needs checking: the dataset turned out to be separable by a "
-                 "single feature. That is why the rest of the results focus on multi-class "
-                 "detection and on attacks.")
-
-
-def s_multiclass(prs):
-    slide = base(prs, "04 · Results", "Multi-class detection reveals the non-IID problem")
-    picture(slide, "multiclass_recall.png", LEFT, Inches(1.85), h=Inches(4.95))
-    x = Inches(8.35)
-    text(slide, x, Inches(1.95), Inches(4.2), Inches(0.35), "MACRO-F1", size=11, bold=True,
-         color=ACCENT)
-    for i, (key, lab) in enumerate((("centralized", "Centralized"),
-                                    ("federated_iid", "FedAvg · IID"),
-                                    ("federated_router", "FedAvg · real routers"))):
-        y = Inches(2.4) + i * Inches(0.78)
-        text(slide, x, y, Inches(4.2), Inches(0.75),
-             [[(f"{MC[key]['macro_f1']:.2f}", {"size": 22, "font": SERIF,
-                                               "color": BRONZE if i == 2 else INK})],
-              [(lab, {"size": 11, "color": INK_SOFT})]], spacing=1.0)
-    text(slide, x, Inches(4.85), Inches(4.2), Inches(1.9),
-         "Every attack type held by only one or two routers is never learned over the real "
-         "routers — the other clients' updates average it away. DDoS-tcp survives (70%) "
-         "because its router carries 25% of the weight.", size=12, color=INK, spacing=1.25)
-    notes(slide, "When the model must name the attack, federated training over real routers "
-                 "loses half its macro-F1. Attack types seen at only one router are averaged "
-                 "away. This is the non-IID problem our project is about, made visible.")
-
-
-def s_attack(prs):
-    slide = base(prs, "04 · Results", "The protocol under label-flipping attack")
-    picture(slide, "attack_accuracy_by_round.png", LEFT, Inches(1.8), w=Inches(8.3))
-    x = Inches(9.4)
-    rows = [("FLNET2023", FL["none"]["accuracy_mean"], FL["v1"]["accuracy_mean"], "v1"),
-            ("NSL-KDD", NL["none"]["accuracy_mean"], NL["v2"]["accuracy_mean"], "v2")]
-    text(slide, x, Inches(1.95), Inches(3.2), Inches(0.35), "ACCURACY UNDER ATTACK", size=11,
-         bold=True, color=ACCENT)
-    for i, (name, none_, prot, ver) in enumerate(rows):
-        y = Inches(2.4) + i * Inches(1.2)
-        text(slide, x, y, Inches(3.2), Inches(1.1),
-             [[(name, {"bold": True, "size": 12.5})],
-              [(f"{pct(none_)}  →  {pct(prot)}", {"size": 20, "font": SERIF})],
-              [(f"no defense → protocol {ver}", {"size": 10.5, "color": INK_SOFT})]],
-             spacing=1.1)
-    text(slide, x, Inches(4.95), Inches(3.2), Inches(1.8),
-         "NSL-KDD: significant (p = 0.009, 10 seeds). FLNET2023: same direction, not "
-         "significant with 5 seeds. 105 / 105 tampered messages rejected.",
-         size=11.5, color=INK_SOFT, spacing=1.25)
-    notes(slide, "Attackers start after the dashed line. Without protection accuracy swings "
-                 "and drops; with the protocol it stays near the clean level. The NSL-KDD "
-                 "result is statistically significant; FLNET2023 points the same way.")
-
-
-def s_backdoor(prs):
-    slide = base(prs, "04 · Results", "Backdoors and communication cost")
-    picture(slide, "backdoor_success.png", LEFT, Inches(1.85), h=Inches(3.6))
-    picture(slide, "message_size.png", Inches(6.85), Inches(1.95), w=Inches(5.6))
-    text(slide, LEFT, Inches(5.6), Inches(5.6), Inches(1.2),
-         f"NSL-KDD backdoor success {pct(NB['none']['backdoor_asr_mean'])} → "
-         f"{pct(NB['v2']['backdoor_asr_mean'])} (p < 0.001). On FLNET2023 the backdoor failed "
-         "even without a defense — honest routers outvote it.", size=12, color=INK_SOFT,
-         spacing=1.25)
-    text(slide, Inches(6.85), Inches(5.6), Inches(5.6), Inches(1.2),
-         f"The header, fingerprint and tag add {pct(OVERHEAD, 2)}; plain HTTP/JSON would be "
-         f"{JSON_X:.1f}× the size of the raw update.", size=12, color=INK_SOFT, spacing=1.25)
-    notes(slide, "Left: the protocol cuts the backdoor's success by about three quarters on "
-                 "NSL-KDD. Right: all of the protection costs less than one percent in message "
-                 "size, while JSON would be more than five times larger.")
+        y = Inches(2.35) + i * Inches(0.62)
+        text(slide, LEFT, y, Inches(1.9), Inches(0.55), num, size=20, font=SERIF,
+             anchor=MSO_ANCHOR.MIDDLE)
+        text(slide, LEFT + Inches(1.95), y, Inches(2.4), Inches(0.55), lab, size=11.5,
+             color=INK_SOFT, anchor=MSO_ANCHOR.MIDDLE)
+    label(slide, LEFT, Inches(4.35), colw, "Multi-class macro-F1 · 11 types")
+    text(slide, LEFT, Inches(4.7), colw, Inches(0.5), [[
+        (f"{MC['centralized']['macro_f1']:.2f}", {"font": SERIF, "size": 18}),
+        ("  central   ", {"size": 11, "color": INK_SOFT}),
+        (f"{MC['federated_iid']['macro_f1']:.2f}", {"font": SERIF, "size": 18}),
+        ("  IID   ", {"size": 11, "color": INK_SOFT}),
+        (f"{MC['federated_router']['macro_f1']:.2f}", {"font": SERIF, "size": 18,
+                                                       "color": BRONZE}),
+        ("  routers", {"size": 11, "color": INK_SOFT})]])
+    text(slide, LEFT, Inches(5.35), colw, Inches(1.5),
+         "We checked the 100%: one feature alone scores 97.5%, so binary accuracy cannot "
+         "separate setups. With 11 classes, attack types seen at only one or two routers are "
+         "averaged away: the non-IID cost.", size=11, color=INK_SOFT, spacing=1.25)
+    picture(slide, "multiclass_recall.png", Inches(5.55), Inches(1.95), w=Inches(6.98))
+    notes(slide, "Federated training over the real routers matches centralized training on "
+                 "the binary task. But we checked the perfect score: the emulated traffic is "
+                 "separable by one feature, so we also trained an 11-class model. There, "
+                 "macro-F1 drops from 0.76 with an IID split to 0.39 with the real routers: "
+                 "attack types held by one router are averaged away. The chart shows recall "
+                 "per attack type.")
 
 
 def _dropout_stats():
@@ -905,209 +736,134 @@ def _dropout_stats():
             rs = [r for r in runs if r["setting"] == p and r["policy"] == policy]
             row[policy] = float(np.mean([np.mean(r["accuracy_by_round"][calib:]) for r in rs]))
         row["caught"] = RB["dropout"][str(p)]["v2"]["detection_rate_mean"]
-        row["fpr"] = RB["dropout"][str(p)]["v2"]["false_positive_rate_mean"]
         out[p] = row
     return out
 
 
-def s_dropout(prs):
-    slide = base(prs, "04 · Results", "Robustness I — routers dropping out")
-    picture(slide, "dropout_accuracy.png", LEFT, Inches(1.8), w=Inches(8.4))
-    stats = _dropout_stats()
-    rows = [["Offline", "No defense", "Protocol", "Caught"]]
-    rows += [[f"{100 * p:.0f}%", pct(v["none"]), pct(v["v2"]), pct(v["caught"], 0)]
-             for p, v in stats.items()]
-    table(slide, Inches(9.35), Inches(1.95), [Inches(0.72), Inches(0.98), Inches(0.85),
-                                              Inches(0.63)], rows, size=11,
-          row_h=Inches(0.48))
-    text(slide, Inches(9.35), Inches(4.05), Inches(3.18), Inches(2.6),
-         "Accuracy is the mean over all attack rounds. The protocol helps at every level and "
-         "keeps wrongly excluded honest updates under 1%, but its advantage shrinks as more "
-         "routers drop out — with ~6 online, 2 attackers pull the round's median.",
-         size=11.5, color=INK_SOFT, spacing=1.25)
-    notes(slide, "Each round every router is offline with some probability. The protocol "
-                 "still helps, but at 40% dropout it catches only about a third of the "
-                 "poisoned updates — the consensus it compares against is built from fewer "
-                 "routers.")
-
-
-def s_scale(prs):
-    slide = base(prs, "04 · Results", "Robustness II — more clients, and a traffic shift")
-    picture(slide, "scale_global_vs_mondrian.png", LEFT, Inches(1.8), w=Inches(8.4))
-    sc = RB["scale"]
-    rows = [["Clients", "Caught", "Honest excl.", "Server"]]
-    for k in ("1", "2", "4"):
-        e = sc[k]["v2"]
-        rows.append([str(10 * int(k)), pct(e["detection_rate_mean"], 0),
-                     pct(e["false_positive_rate_mean"]),
-                     f"{e['mean_server_ms_per_round_mean']:.0f} ms"])
-    table(slide, Inches(9.35), Inches(1.95), [Inches(0.72), Inches(0.7), Inches(1.06),
-                                              Inches(0.7)], rows, size=11,
-          row_h=Inches(0.48))
+def s_results_attacks(prs):
+    slide = base(prs, "Results · 2 / 2", "The protocol under attack")
+    picture(slide, "attack_accuracy_by_round.png", LEFT, Inches(1.95), w=Inches(7.4))
+    drop = _dropout_stats()
+    hi = max(drop)
+    sc = RB["scale"]["4"]["v2"]
     shift = next(iter(RB["shift"].values()))["v2"]
-    text(slide, Inches(9.35), Inches(4.05), Inches(3.18), Inches(2.6), [
-        [("Global threshold shown. More clients give a steadier median and smaller "
-          "attackers; server time grows about linearly.", {"size": 11.5, "color": INK_SOFT})],
-        [("", {"size": 6})],
-        [("Traffic shift: ", {"bold": True, "size": 11.5}),
-         (f"router 3 suddenly seeing DDoS traffic was wrongly excluded "
-          f"{pct(shift['shifted_client_excluded_rate_mean'], 0)} of the time.",
-          {"size": 11.5, "color": INK_SOFT})],
-    ], spacing=1.25)
-    notes(slide, "Splitting each router into sub-clients gives 20 and 40 clients. More "
-                 "clients make the filter stronger and the server cost stays in "
-                 "milliseconds. Mondrian is still not better. An honest router whose traffic "
-                 "changed was never wrongly rejected.")
+    text(slide, LEFT, Inches(5.35), Inches(7.4), Inches(1.5),
+         "Accuracy per round under label flipping (2 of 10 routers attack after the dashed "
+         "line). NSL-KDD: significant, p = 0.009 over 10 seeds. FLNET2023: same direction, "
+         "not significant with 5 seeds.", size=11, color=INK_SOFT, spacing=1.25)
+
+    x, w = Inches(8.55), Inches(3.98)
+    rows = [
+        ("Tampered messages rejected", "105 / 105"),
+        ("Label flip · FLNET2023", f"{pct(FL['none']['accuracy_mean'])} → "
+                                   f"{pct(FL['v1']['accuracy_mean'])}"),
+        ("Label flip · NSL-KDD", f"{pct(NL['none']['accuracy_mean'])} → "
+                                 f"{pct(NL['v2']['accuracy_mean'])}"),
+        ("Backdoor success · NSL-KDD", f"{pct(NB['none']['backdoor_asr_mean'])} → "
+                                       f"{pct(NB['v2']['backdoor_asr_mean'])}"),
+        (f"{100 * hi:.0f}% routers offline", f"{pct(drop[hi]['none'])} → "
+                                             f"{pct(drop[hi]['v2'])}"),
+        ("40 clients · caught", f"{pct(sc['detection_rate_mean'], 0)} · "
+                                f"{sc['mean_server_ms_per_round_mean']:.0f} ms/round"),
+        ("Shifted honest router excluded", pct(shift["shifted_client_excluded_rate_mean"], 0)),
+    ]
+    label(slide, x, Inches(1.95), w, "No defense → Krypsis")
+    for i, (name, val) in enumerate(rows):
+        y = Inches(2.35) + i * Inches(0.62)
+        text(slide, x, y, w, Inches(0.6),
+             [[(name, {"size": 10.5, "color": INK_SOFT})],
+              [(val, {"size": 15, "font": SERIF})]], spacing=1.05)
+        hrule(slide, x, y + Inches(0.6), w, weight=0.5)
+    notes(slide, "Left: accuracy round by round. Without protection the poisoned rounds "
+                 "drag accuracy down; with Krypsis it stays near the clean level. Right: every "
+                 "tampered message was rejected, label flipping and backdoors lose most of "
+                 "their effect, the protocol still helps when 40% of routers drop out, it "
+                 "scales to 40 clients in milliseconds, and an honest router whose traffic "
+                 "changed was never excluded. On FLNET2023 the backdoor failed even without a "
+                 "defense.")
 
 
-def s_compare_existing(prs):
-    slide = base(prs, "05 · Comparison", "Compared with existing approaches")
+def s_comparison(prs):
+    slide = base(prs, "Comparison", "Comparison with existing approaches and our setups")
     rows = [
         ["Approach", "Tamper check", "Filters poisoned updates", "When / cost", "Evidence here"],
-        ["Plain FedAvg\n(McMahan 2017)", "No", "No", "—",
+        ["Plain FedAvg (McMahan 2017)", "No", "No", "—",
          f"Label flip: {pct(FL['none']['accuracy_mean'])} FLNET, {pct(NL['none']['accuracy_mean'])} NSL"],
         ["HTTP + JSON transfer", "Channel only (TLS)", "No",
          f"{JSON_X:.1f}× message size", "Measured: 1,316 KB / update"],
-        ["Krum\n(Blanchard 2017)", "No", "Yes, every round",
-         "After full receipt · pairwise O(n²·d)", "Not implemented (literature)"],
-        ["Trimmed mean\n(Yin 2018)", "No", "Yes, every round",
+        ["Krum (Blanchard 2017)", "No", "Yes, every round",
+         "After full receipt · O(n²·d)", "Literature (not implemented)"],
+        ["Trimmed mean (Yin 2018)", "No", "Yes, every round",
          "After full receipt · O(n·d·log n)", "Used inside our second check"],
-        ["Krypsis (ours)", "Per-client HMAC", "Yes — cheap filter first",
-         f"Before aggregation · +{pct(OVERHEAD, 2)} · ~2 ms / msg",
+        ["Krypsis (ours)", "Per-client HMAC", "Yes, cheap filter first",
+         f"Before aggregation · +{pct(OVERHEAD, 2)}",
          f"Label flip: {pct(FL['v1']['accuracy_mean'])} FLNET, {pct(NL['v2']['accuracy_mean'])} NSL"],
     ]
-    table(slide, LEFT, Inches(1.95), [Inches(2.35), Inches(1.75), Inches(2.3), Inches(2.85),
-                                      Inches(2.48)], rows, size=11.5, row_h=Inches(0.72),
+    table(slide, LEFT, Inches(1.9), [Inches(2.75), Inches(1.65), Inches(2.2), Inches(2.6),
+                                     Inches(2.53)], rows, size=10.5, row_h=Inches(0.43),
           bold_cols=(0,), shade_rows=(5,))
-    text(slide, LEFT, Inches(6.4), CONTENT_W, Inches(0.5),
-         "Rows without measurements are characterised from the cited papers; Krypsis adds a "
-         "per-client integrity tag and moves filtering before aggregation, and keeps robust "
-         "aggregation as a second step only for flagged rounds.", size=10.5, color=MUTED)
-    notes(slide, "Plain FedAvg has no protection. HTTP plus TLS protects the channel but not "
-                 "against a malicious client. Krum and trimmed mean filter updates, but only "
-                 "after receiving everything, every round. Krypsis adds per-client integrity "
-                 "and a cheap filter first. Rows marked as literature were not re-implemented.")
 
-
-def s_compare_ours(prs):
-    slide = base(prs, "05 · Comparison", "Comparison between our own setups")
-    rows = [["Dataset · attack", "Metric", "No defense", "Protocol v1", "Protocol v2", "v2 Mondrian"]]
-
-    def fmt(e, k):
+    def f(e, k):
         return pct(e[f"{k}_mean"])
-    rows += [
-        ["FLNET2023 · label flip", "Accuracy ↑", fmt(FL["none"], "accuracy"),
-         fmt(FL["v1"], "accuracy"), fmt(FL["v2"], "accuracy"), fmt(FL["v2_mondrian"], "accuracy")],
-        ["FLNET2023 · label flip", "Honest excluded ↓", "—",
-         fmt(FL["v1"], "false_positive_rate"), fmt(FL["v2"], "false_positive_rate"),
-         fmt(FL["v2_mondrian"], "false_positive_rate")],
-        ["NSL-KDD · label flip", "Accuracy ↑", fmt(NL["none"], "accuracy"),
-         fmt(NL["v1"], "accuracy"), fmt(NL["v2"], "accuracy"), fmt(NL["v2_mondrian"], "accuracy")],
-        ["NSL-KDD · label flip", "Honest excluded ↓", "—",
-         fmt(NL["v1"], "false_positive_rate"), fmt(NL["v2"], "false_positive_rate"),
-         fmt(NL["v2_mondrian"], "false_positive_rate")],
-        ["NSL-KDD · backdoor", "Backdoor success ↓", fmt(NB["none"], "backdoor_asr"),
-         fmt(NB["v1"], "backdoor_asr"), fmt(NB["v2"], "backdoor_asr"),
-         fmt(NB["v2_mondrian"], "backdoor_asr")],
-    ]
-    table(slide, LEFT, Inches(1.95), [Inches(2.75), Inches(2.0), Inches(1.75), Inches(1.75),
-                                      Inches(1.75), Inches(1.73)], rows, size=12,
-          row_h=Inches(0.55))
-    text(slide, LEFT, Inches(5.45), CONTENT_W, Inches(1.4), [
-        [("v1", {"bold": True, "size": 12}), (" drops every flagged update.   ", {"size": 12,
-                                                                               "color": INK_SOFT}),
-         ("v2", {"bold": True, "size": 12}),
-         (" adds the second check and a 15% weight cap — fewer honest routers excluded, but on "
-          "FLNET2023 the cap can shift weight from an honest large router to the attackers "
-          "(one seed: 97.3% → 83.8%).", {"size": 12, "color": INK_SOFT})],
-        [("FLNET2023: 5 seeds · NSL-KDD: 10 seeds · means shown.", {"size": 10.5,
-                                                                    "color": MUTED})],
-    ], spacing=1.3)
-    notes(slide, "Across both datasets the protocol beats no defense. v2 cuts false alarms; "
-                 "on NSL-KDD it is better than v1 on every measure, while on FLNET2023 the "
-                 "weight cap has a real downside. Mondrian is never clearly better.")
-
-
-# ---- 06 Conclusion
-
-def s_answer(prs):
-    slide = base(prs, "06 · Conclusion", "Answering the research question")
-    text(slide, LEFT, Inches(1.95), CONTENT_W, Inches(0.9),
-         "Do per-cluster (Mondrian) thresholds reduce false alarms on honest non-IID routers "
-         "without missing attacks?", size=16, font=SERIF, color=INK_SOFT, italic=True)
-    tests = [
-        ("Protocol experiment · 15 seeds",
-         f"Mondrian caught {pct(PG['mondrian']['detection_rate_mean'])}, global "
-         f"{pct(PG['global']['detection_rate_mean'])} · p = 0.21"),
-        ("Defense experiment · both datasets", "no significant difference · all p > 0.17"),
-        ("Scalability · 10, 20, 40 clients", "no significant difference · all p ≥ 0.11"),
-    ]
-    for i, (name, res) in enumerate(tests):
-        y = Inches(3.0) + i * Inches(0.75)
-        text(slide, LEFT, y, Inches(4.5), Inches(0.6), name, size=13.5, bold=True,
-             anchor=MSO_ANCHOR.MIDDLE)
-        text(slide, Inches(5.4), y, Inches(7.1), Inches(0.6), res, size=13.5, color=INK_SOFT,
-             anchor=MSO_ANCHOR.MIDDLE)
-        hrule(slide, LEFT, y + Inches(0.66), CONTENT_W, weight=0.5)
-    rect(slide, LEFT, Inches(5.4), CONTENT_W, Inches(1.25), fill=ACCENT_SOFT, line=None,
-         radius=0.06)
-    text(slide, LEFT + Inches(0.35), Inches(5.4), Inches(11), Inches(1.25), [
-        [("Answer: no.", {"bold": True, "size": 15, "color": ACCENT}),
-         ("  Once scores are standardized within each round, a single global threshold "
-          "already keeps false alarms low; Mondrian adds complexity without a measurable gain "
-          "— and the 'too few clients per cluster' explanation did not hold up to 40 clients.",
-          {"size": 13})],
-    ], anchor=MSO_ANCHOR.MIDDLE, spacing=1.3)
-    notes(slide, "We tested the question three separate ways. Mondrian was never "
-                 "significantly better. A negative answer, tested properly, is still an "
-                 "answer — and it tells practitioners the simpler option is enough.")
-
-
-def s_limits(prs):
-    slide = base(prs, "06 · Conclusion", "What did not work, and limitations")
-    items = [
-        ("Binary detection was too easy.", "One feature scores 97.5% on FLNET2023 — so binary "
-         "accuracy cannot separate setups."),
-        ("First protocol design failed.", "Fixed thresholds flagged 65–96% of honest updates "
-         "once training converged; fixed by per-round standardization."),
-        ("The weight cap is not free.", "It can hand an honest large router's weight to the "
-         "attackers."),
-        ("Heavy dropout weakens the filter.", "At 40% offline, only about a third of poisoned "
-         "updates are caught."),
-        ("Evaluation limits.", "Simulated federation, emulated traffic, non-adaptive "
-         "attackers, 5 seeds on FLNET2023."),
-    ]
-    bullets(slide, LEFT, Inches(2.0), Inches(11.5), Inches(4.8), items, size=14, gap=14)
-    notes(slide, "We report what did not work as clearly as what did. Each of these is "
-                 "documented in the README with the measurements behind it.")
+    ours = [["Our setups", "No defense", "Protocol v1", "Protocol v2", "v2 Mondrian"],
+            ["FLNET2023 · label flip accuracy ↑", f(FL["none"], "accuracy"),
+             f(FL["v1"], "accuracy"), f(FL["v2"], "accuracy"), f(FL["v2_mondrian"], "accuracy")],
+            ["NSL-KDD · label flip accuracy ↑", f(NL["none"], "accuracy"),
+             f(NL["v1"], "accuracy"), f(NL["v2"], "accuracy"), f(NL["v2_mondrian"], "accuracy")],
+            ["NSL-KDD · backdoor success ↓", f(NB["none"], "backdoor_asr"),
+             f(NB["v1"], "backdoor_asr"), f(NB["v2"], "backdoor_asr"),
+             f(NB["v2_mondrian"], "backdoor_asr")],
+            ["NSL-KDD · honest excluded ↓", "—", f(NL["v1"], "false_positive_rate"),
+             f(NL["v2"], "false_positive_rate"), f(NL["v2_mondrian"], "false_positive_rate")]]
+    table(slide, LEFT, Inches(4.6), [Inches(3.73), Inches(2.0), Inches(2.0), Inches(2.0),
+                                      Inches(2.0)], ours, size=10.5, row_h=Inches(0.38))
+    text(slide, LEFT, Inches(6.6), CONTENT_W, Inches(0.25),
+         "v1 drops every flagged update · v2 adds the second check and the 15% weight cap · "
+         "FLNET2023 5 seeds, NSL-KDD 10 seeds, means shown.", size=9.5, color=MUTED)
+    notes(slide, "Top: plain FedAvg has no protection; HTTP with TLS protects the channel but "
+                 "not against a malicious client; Krum and trimmed mean filter updates only "
+                 "after receiving everything, every round. Krypsis adds a per-client integrity "
+                 "tag and a cheap filter first. Bottom: our own setups. Both protocol versions "
+                 "beat no defense; v2 excludes fewer honest routers; Mondrian is never clearly "
+                 "better. On FLNET2023 the weight cap has a downside in one seed.")
 
 
 def s_conclusion(prs):
-    slide = base(prs, "06 · Conclusion", "Conclusion and future work")
-    text(slide, LEFT, Inches(1.95), Inches(5.7), Inches(0.35), "CONCLUSIONS", size=11,
-         bold=True, color=ACCENT)
-    bullets(slide, LEFT, Inches(2.4), Inches(5.7), Inches(4.4), [
+    slide = base(prs, "Conclusion", "Conclusion")
+    rect(slide, LEFT, Inches(1.9), CONTENT_W, Inches(1.05), fill=ACCENT_SOFT, line=None,
+         radius=0.06)
+    text(slide, LEFT + Inches(0.3), Inches(1.9), CONTENT_W - Inches(0.6), Inches(1.05), [
+        [("Research question · answer: no.  ", {"bold": True, "color": ACCENT, "size": 13}),
+         (f"Mondrian caught {pct(PG['mondrian']['detection_rate_mean'])} vs global "
+          f"{pct(PG['global']['detection_rate_mean'])} (p = 0.21, 15 seeds), and no other "
+          "test was significant (all p ≥ 0.11). With per-round standardization, one global "
+          "threshold is enough.", {"size": 12.5})],
+    ], anchor=MSO_ANCHOR.MIDDLE, spacing=1.25)
+    colw = Inches(5.6)
+    rx = Inches(6.93)
+    label(slide, LEFT, Inches(3.2), colw, "Conclusions")
+    bullets(slide, LEFT, Inches(3.55), colw, Inches(3.3), [
         "Federated training over 10 real routers matches centralized binary detection.",
         "Naming the attack exposes the non-IID cost: macro-F1 0.39 vs 0.76 IID.",
-        "Krypsis rejects every tampered message and raises accuracy under attack at under 1% "
-        "message cost.",
-        "A global threshold is enough — Mondrian brought no significant gain.",
-    ], size=14, gap=14)
-    text(slide, Inches(7.0), Inches(1.95), Inches(5.5), Inches(0.35), "FUTURE WORK",
-         size=11, bold=True, color=ACCENT)
-    bullets(slide, Inches(7.0), Inches(2.4), Inches(5.5), Inches(4.4), [
-        "Run the protocol on the multi-class task, where honest routers truly disagree.",
-        "A trust-dependent weight cap instead of a fixed one.",
-        "Score against a longer history to survive heavy dropout.",
-        "Deploy over a real network (Mininet / SDN) and test adaptive attackers.",
-        "More FLNET2023 seeds for statistical power.",
-    ], size=14, gap=14)
-    notes(slide, "Four conclusions and five next steps. The most valuable next step is the "
-                 "multi-class protocol experiment, where honest routers genuinely disagree.")
+        "Krypsis rejects every tampered message and raises accuracy under attack, for "
+        "under 1% extra message size.",
+        "A global threshold is enough; Mondrian brought no significant gain.",
+    ], size=12, gap=8)
+    label(slide, rx, Inches(3.2), colw, "Limitations and future work", color=BRONZE)
+    bullets(slide, rx, Inches(3.55), colw, Inches(3.3), [
+        "Simulated in one process on emulated traffic; attackers do not adapt.",
+        "The weight cap can shift weight from an honest large router to attackers.",
+        "At 40% dropout only about a third of poisoned updates are caught.",
+        "Next: protocol on the 11-class task, a trust-based cap, a real network "
+        "(Mininet / SDN), more FLNET2023 seeds.",
+    ], size=12, gap=8)
+    notes(slide, "We tested the research question three ways and Mondrian was never "
+                 "significantly better: a negative answer, tested properly. Then the four "
+                 "conclusions, and honestly what did not work and what comes next.")
 
 
 def s_references(prs):
-    slide = base(prs, "06 · Conclusion", "References")
+    slide = base(prs, "References", "References")
     refs = [
         ("Kumar, P., Liu, J., et al. (2023). FLNET2023: Realistic Network Intrusion Detection "
          "Dataset for Federated Learning. MILCOM 2023.",
@@ -1139,72 +895,29 @@ def s_references(prs):
     for i, (cite, url) in enumerate(refs):
         col, row = divmod(i, 6)
         x = LEFT + col * Inches(5.98)
-        y = Inches(1.85) + row * Inches(0.84)
-        box = text(slide, x, y, col_w, Inches(0.8),
-                   [[(f"[{i + 1}]  ", {"color": ACCENT, "bold": True, "size": 10}),
-                     (cite, {"size": 10})],
-                    [(url, {"size": 9.5, "color": ACCENT})]], spacing=1.1)
-        run = box.text_frame.paragraphs[1].runs[0]
-        run.hyperlink.address = url
-    text(slide, LEFT, Inches(6.75), CONTENT_W, Inches(0.25),
-         "Code, results and full write-up: github.com/Vinudharshini18/Krypsis-A-network-intrusion-detection-system",
-         size=9.5, color=MUTED)
-    notes(slide, "All links are clickable in the slide. The GitHub repository has the code, "
-                 "every result file, and the full README.")
-
-
-def s_thanks(prs):
-    slide = base(prs, bg=BG_DEEP, footer=False)
-    text(slide, LEFT, Inches(2.6), Inches(11), Inches(1.2), "Thank you", size=60, font=SERIF)
-    hrule(slide, LEFT, Inches(3.85), Inches(0.8), color=ACCENT, weight=1.5)
-    text(slide, LEFT, Inches(4.05), Inches(11), Inches(0.6), "Questions and discussion",
-         size=20, font=SERIF, color=INK_SOFT)
-    text(slide, LEFT, Inches(5.6), Inches(11), Inches(0.4),
-         "github.com/Vinudharshini18/Krypsis-A-network-intrusion-detection-system",
-         size=12, color=ACCENT)
-    notes(slide, "Thank the panel and open for questions. The handbook has prepared answers "
-                 "for the likely ones: why 100% accuracy, and why the research question came "
-                 "out negative.")
+        y = Inches(1.85) + row * Inches(0.75)
+        box = text(slide, x, y, col_w, Inches(0.72),
+                   [[(f"[{i + 1}]  ", {"color": ACCENT, "bold": True, "size": 9.5}),
+                     (cite, {"size": 9.5})],
+                    [(url, {"size": 9, "color": ACCENT})]], spacing=1.08)
+        box.text_frame.paragraphs[1].runs[0].hyperlink.address = url
+    hrule(slide, LEFT, Inches(6.4), CONTENT_W)
+    text(slide, LEFT, Inches(6.5), Inches(4), Inches(0.4), "Thank you · questions welcome",
+         size=15, font=SERIF, color=ACCENT)
+    text(slide, Inches(5.2), Inches(6.55), Inches(7.33), Inches(0.3),
+         "Code and results: github.com/Vinudharshini18/Krypsis-A-network-intrusion-detection-system",
+         size=9.5, color=MUTED, align=PP_ALIGN.RIGHT)
+    notes(slide, "All links are clickable. The GitHub repository has the code, every result "
+                 "file and the full README. Thank the panel and open for questions.")
 
 
 def build():
     prs = Presentation()
     prs.slide_width, prs.slide_height = W, H
-    s_title(prs)
-    s_outline(prs)
-    divider(prs, "01", "Introduction", "Why intrusion detection needs federated learning — "
-                                       "and why that is not the end of the problem")
-    s_background(prs)
-    s_fl(prs)
-    s_gap(prs)
-    s_question(prs)
-    divider(prs, "02", "Objectives", "What we set out to do, and the scope we did it in")
-    s_objectives(prs)
-    s_scope(prs)
-    divider(prs, "03", "Methodology", "Data, model, the Krypsis protocol and how we tested it")
-    s_architecture(prs)
-    s_dataset(prs)
-    s_preprocess(prs)
-    s_model(prs)
-    s_message(prs)
-    s_server(prs)
-    s_design(prs)
-    divider(prs, "04", "Results", "Detection, attacks, backdoors and robustness")
-    s_baseline(prs)
-    s_multiclass(prs)
-    s_attack(prs)
-    s_backdoor(prs)
-    s_dropout(prs)
-    s_scale(prs)
-    divider(prs, "05", "Comparison", "Against existing approaches, and between our own setups")
-    s_compare_existing(prs)
-    s_compare_ours(prs)
-    divider(prs, "06", "Conclusion", "The answer to our question, limitations and what comes next")
-    s_answer(prs)
-    s_limits(prs)
-    s_conclusion(prs)
-    s_references(prs)
-    s_thanks(prs)
+    for make in (s_title, s_intro, s_objectives, s_method_system, s_method_data_model,
+                 s_method_protocol, s_method_server, s_results_detection, s_results_attacks,
+                 s_comparison, s_conclusion, s_references):
+        make(prs)
     _muted_links(prs)
     prs.save(OUT_PATH)
     print(f"Saved {OUT_PATH} ({len(prs.slides)} slides)")
