@@ -33,27 +33,31 @@ TOTAL = 14
 
 # ------------------------------------------------------------------ theme
 
-BG = RGBColor(0x0F, 0x16, 0x26)
-PANEL = RGBColor(0x17, 0x22, 0x38)
-PANEL_2 = RGBColor(0x1E, 0x2B, 0x46)
-CODE_BG = RGBColor(0x0B, 0x11, 0x1E)
-LINE = RGBColor(0x2A, 0x39, 0x58)
-TEXT = RGBColor(0xE8, 0xED, 0xF5)
-SOFT = RGBColor(0xA9, 0xB6, 0xCB)
-MUTED = RGBColor(0x6E, 0x7F, 0x9C)
-ACCENT = RGBColor(0x5E, 0xEA, 0xD4)
-ACCENT_DIM = RGBColor(0x16, 0x3F, 0x45)
-AMBER = RGBColor(0xFB, 0xBF, 0x24)
-AMBER_DIM = RGBColor(0x45, 0x37, 0x16)
-CORAL = RGBColor(0xF8, 0x71, 0x71)
+# Same look as the first class deck (build_deck.py): sage paper, deep ink,
+# teal accent, warm orange highlights, white bordered cards.
+BG = RGBColor(0xF2, 0xF4, 0xF0)
+BG_DEEP = RGBColor(0xE7, 0xEB, 0xE4)
+PANEL = RGBColor(0xFF, 0xFF, 0xFF)
+PANEL_2 = RGBColor(0xE7, 0xEB, 0xE4)
+CODE_BG = RGBColor(0xFF, 0xFF, 0xFF)
+LINE = RGBColor(0xCF, 0xD6, 0xCB)
+TEXT = RGBColor(0x17, 0x24, 0x20)
+SOFT = RGBColor(0x56, 0x65, 0x5D)
+MUTED = RGBColor(0x8A, 0x96, 0x8F)
+ACCENT = RGBColor(0x14, 0x6B, 0x62)
+ACCENT_DIM = RGBColor(0xD7, 0xEB, 0xE7)
+AMBER = RGBColor(0xC9, 0x7A, 0x2B)
+AMBER_DIM = RGBColor(0xF5, 0xE2, 0xC8)
+CORAL = RGBColor(0xC9, 0x7A, 0x2B)
 # syntax colours
-KW = RGBColor(0xC7, 0x92, 0xEA)
-STR = RGBColor(0xA5, 0xD6, 0xA7)
-NUM = RGBColor(0xF9, 0xA6, 0x6C)
-FN = RGBColor(0x82, 0xAA, 0xFF)
+KW = RGBColor(0x14, 0x6B, 0x62)
+STR = RGBColor(0x9A, 0x5B, 0x13)
+NUM = RGBColor(0xC9, 0x7A, 0x2B)
+FN = RGBColor(0x2E, 0x55, 0x8A)
 
-HEAD = "Bahnschrift"
-BODY = "Segoe UI"
+HEAD = "Calibri"
+BODY = "Calibri"
+DISPLAY = "Arial Black"
 MONO = "Consolas"
 
 W, H = Inches(13.333), Inches(7.5)
@@ -132,6 +136,8 @@ def rect(slide, x, y, w, h, fill=PANEL, line=None, radius=None, line_w=1.0, shap
     else:
         s.fill.solid()
         s.fill.fore_color.rgb = fill
+    if line is None and fill == PANEL:
+        line = LINE
     if line is None:
         s.line.fill.background()
     else:
@@ -172,11 +178,14 @@ def base(prs, tag=None, title=None, subtitle=None):
     _no[0] += 1
     rect(slide, 0, 0, W, H, fill=BG)
     if title:
-        text(slide, LEFT, Inches(0.38), Inches(9), Inches(0.3), tag.upper(), size=12,
-             bold=True, color=ACCENT, font=HEAD)
-        text(slide, LEFT, Inches(0.62), CONTENT_W, Inches(0.62), title, size=30, font=HEAD)
+        tw = Inches(0.4 + 0.085 * len(tag))
+        rect(slide, LEFT, Inches(0.32), tw, Inches(0.32), fill=ACCENT_DIM, radius=0.5)
+        text(slide, LEFT, Inches(0.32), tw, Inches(0.32), tag.upper(), size=10.5, bold=True,
+             color=ACCENT, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
+        text(slide, LEFT, Inches(0.72), CONTENT_W, Inches(0.55), title, size=26,
+             font=DISPLAY)
         if subtitle:
-            text(slide, LEFT, Inches(1.2), CONTENT_W, Inches(0.4), subtitle, size=14,
+            text(slide, LEFT, Inches(1.27), CONTENT_W, Inches(0.4), subtitle, size=14,
                  color=SOFT)
     text(slide, LEFT, Inches(7.02), Inches(6), Inches(0.3), "KRYPSIS  ·  FINAL REVIEW",
          size=10, color=MUTED, font=HEAD)
@@ -203,7 +212,7 @@ def _code_runs(src_line):
         elif number:
             runs.append((number, {"color": NUM}))
         elif word in KEYWORDS:
-            runs.append((word, {"color": KW}))
+            runs.append((word, {"color": KW, "bold": True}))
         elif word and prev in ("def", "class"):
             runs.append((word, {"color": FN}))
         else:
@@ -226,10 +235,7 @@ def code_panel(slide, source, filename, x=LEFT, y=Inches(1.75), w=Inches(8.0),
     size = min(CODE_SIZE, leading / 1.32)
     rect(slide, x, y, w, h, fill=CODE_BG, line=LINE, radius=0.025)
     rect(slide, x, y, w, Inches(0.42), fill=PANEL_2, radius=None)
-    for i, c in enumerate((CORAL, AMBER, ACCENT)):
-        rect(slide, x + Inches(0.2) + i * Inches(0.2), y + Inches(0.15), Inches(0.12),
-             Inches(0.12), fill=c, shape=MSO_SHAPE.OVAL)
-    text(slide, x + Inches(0.95), y, w - Inches(1.1), Inches(0.42), filename, size=11,
+    text(slide, x + Inches(0.25), y, w - Inches(1.1), Inches(0.42), filename, size=11,
          color=SOFT, font=MONO, anchor=MSO_ANCHOR.MIDDLE)
     top = y + Inches(0.6)
     text(slide, x + Inches(0.12), top, Inches(0.4), h - Inches(0.7),
@@ -348,20 +354,15 @@ def mini_bars(slide, x, y, w, h, values, labels, color=ACCENT):
 
 def s01_title(prs):
     slide = base(prs)
-    text(slide, LEFT + Inches(0.1), Inches(0.9), Inches(7), Inches(0.3),
-         "COMPUTER NETWORKS  ·  FINAL PROJECT REVIEW", size=12, bold=True, color=ACCENT,
+    rect(slide, 0, 0, W, H, fill=BG_DEEP)
+    text(slide, LEFT + Inches(0.1), Inches(1.2), Inches(9), Inches(0.3),
+         "COMPUTER NETWORKS  —  FINAL PROJECT REVIEW", size=12, bold=True, color=AMBER,
          font=HEAD)
-    text(slide, LEFT + Inches(0.1), Inches(1.4), Inches(7.5), Inches(1.4), "KRYPSIS", size=80,
-         font=HEAD, color=TEXT)
+    text(slide, LEFT + Inches(0.1), Inches(1.4), Inches(7.5), Inches(1.4), "KRYPSIS", size=72,
+         font=DISPLAY, color=TEXT)
     text(slide, LEFT + Inches(0.1), Inches(2.85), Inches(7.0), Inches(1.0),
          "Federated network intrusion detection with a\nsecurity-fused model-update protocol",
          size=20, color=SOFT, spacing=1.2)
-    chips = ["FLNET2023 · 10 routers", "FedAvg", "HMAC + fingerprint", "Global vs Mondrian"]
-    cx = LEFT + Inches(0.1)
-    for c in chips:
-        w = Inches(0.3 + 0.08 * len(c))
-        pill(slide, cx, Inches(4.05), w, Inches(0.36), c, size=10.5, font=BODY)
-        cx += w + Inches(0.12)
     line(slide, LEFT + Inches(0.1), Inches(4.85), LEFT + Inches(7.0), Inches(4.85))
     team = [("Rithika K", "CB.SC.U4AIE25126"), ("Pradhaniya S", "CB.SC.U4AIE25148"),
             ("Sathya K", "CB.SC.U4AIE25154"), ("Vinudharshini PP", "CB.SC.U4AIE25161")]
@@ -370,32 +371,11 @@ def s01_title(prs):
         text(slide, LEFT + Inches(0.1) + col * Inches(3.5), Inches(5.1) + row * Inches(0.8),
              Inches(3.3), Inches(0.75),
              [[(name, {"bold": True, "size": 15, "font": HEAD})],
-              [(roll, {"size": 11, "color": MUTED, "font": MONO})]], spacing=1.1)
+              [(roll, {"size": 12, "color": SOFT})]], spacing=1.1)
 
-    # Network graphic: one server, ten routers.
-    cx, cy, r = Inches(10.6), Inches(3.55), Inches(2.2)
-    nodes = []
-    for i in range(10):
-        a = -math.pi / 2 + 2 * math.pi * i / 10
-        nodes.append((cx + r * math.cos(a), cy + r * math.sin(a)))
-    for nx, ny in nodes:
-        line(slide, cx, cy, nx, ny, color=LINE, weight=1)
-    for i, (nx, ny) in enumerate(nodes):
-        d = Inches(0.5)
-        rect(slide, nx - d / 2, ny - d / 2, d, d, fill=PANEL_2, line=ACCENT, line_w=1.25,
-             shape=MSO_SHAPE.OVAL)
-        text(slide, nx - d / 2, ny - d / 2, d, d, f"R{i + 1}", size=10, color=TEXT,
-             font=HEAD, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
-    d = Inches(1.15)
-    rect(slide, cx - d / 2, cy - d / 2, d, d, fill=ACCENT_DIM, line=ACCENT, line_w=2,
-         shape=MSO_SHAPE.OVAL)
-    text(slide, cx - d / 2, cy - d / 2, d, d, "Server", size=13, bold=True, color=ACCENT,
-         font=HEAD, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE)
     notes(slide, """
         Good morning. Our project is Krypsis: a network intrusion detection system trained
         with federated learning across 10 routers, protected by our own update protocol.
-        The picture on the right is the setup: ten routers, each keeping its own traffic,
-        and one server that combines their model updates.
         Most of this talk is the methodology, step by step, with the real code we wrote.
     """)
 
