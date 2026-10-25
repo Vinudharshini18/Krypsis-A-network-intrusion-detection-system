@@ -362,8 +362,10 @@ Krypsis-A-network-intrusion-detection-system/
 │   │                        # fetch via src/download_flnet2023.py)
 │   ├── NSL-KDD/             # KDDTrain+.txt / KDDTest+.txt (replication)
 │   ├── processed_nslkdd/    # NSL-KDD arrays (not tracked in git)
-│   └── processed/           # Preprocessed arrays (not tracked in git;
-│                            # regenerate via src/preprocess.py)
+│   ├── processed/           # Preprocessed arrays, official split (not
+│   │                        # tracked in git; src/preprocess.py)
+│   └── processed_701515/    # 70/15/15 split, duplicates removed (not
+│                            # tracked in git; src/split_701515.py)
 ├── src/
 │   ├── download_flnet2023.py      # Phase 2 — dataset download
 │   ├── preprocess.py              # Phase 3 — preprocessing
@@ -376,6 +378,8 @@ Krypsis-A-network-intrusion-detection-system/
 │   ├── preprocess_nslkdd.py       # Phase 9 — NSL-KDD replication data
 │   ├── multiclass.py              # Phase 10 — 11-class detection
 │   ├── robustness_experiment.py   # Phase 11 — dropout, shift, scalability
+│   ├── split_701515.py            # Phase 12 — 70/15/15 split, duplicates removed
+│   ├── split_experiment.py        # Phase 12 — train/val/test overfitting check
 │   ├── make_plots.py              # Figures for README and slides
 │   ├── demo.py                    # ~3-minute live demo of the whole pipeline
 │   └── indistribution_check.py    # NSL-KDD-era diagnostic (see Phase 5)
@@ -387,6 +391,7 @@ Krypsis-A-network-intrusion-detection-system/
 │   ├── defense_experiment.json    # Phase 9 results (all 120 runs + summary)
 │   ├── multiclass.json            # Phase 10 results
 │   ├── robustness_experiment.json # Phase 11 results (all 70 runs + summary)
+│   ├── split_701515/              # Phase 12 results on the 70/15/15 split
 │   └── figures/                   # PNG figures (src/make_plots.py)
 ├── presentation/            # Slides + handbook (built from results/*.json)
 ├── requirements.txt         # Python dependencies
@@ -423,9 +428,46 @@ python src\make_plots.py
 cd presentation && python build_deck.py && python build_handbook_pdf.py
 ```
 
+**70 / 15 / 15 split (Phase 12, used by the final-review deck):**
+
+```
+python src\split_701515.py          # dedup + 70/15/15 per router
+python src\split_experiment.py      # centralized + FedAvg, train/val/test table
+set KRYPSIS_SPLIT=701515
+python src\protocol_experiment.py   # 45 runs on the new split
+python src\defense_experiment.py    # FLNET2023, 40 runs on the new split
+cd presentation && python build_final_review.py
+```
+
 ## Results at a glance
 
-All figures are generated from `results/*.json` by `src/make_plots.py`.
+**Latest: 70 / 15 / 15 split with duplicates removed (Phase 12).** These
+are the numbers in the final-review deck.
+
+| FLNET2023 | Train (70%) | Validation (15%) | Test (15%) |
+|---|---|---|---|
+| Centralized | 100.00% | 100.00% | 100.00% |
+| FedAvg, 10 routers | 99.97% | 99.97% | 99.96% |
+| FedAvg, IID | 99.99% | 99.99% | 99.99% |
+
+Train, validation and test accuracy are equal: no overfitting. Loss
+curves: `results/split_701515/figures/loss_curves.png`.
+
+| Label flipping, 2 of 10 routers (15 seeds) | No protocol | Global | Mondrian |
+|---|---|---|---|
+| Mean accuracy, attack rounds 6–12 | 81.9% | 85.0% | **94.6%** |
+| Attacks caught | — | 29.5% | **70.0%** |
+| Honest updates flagged | — | 2.0% | 12.9% |
+| Tampered messages rejected | — | 105/105 | 105/105 |
+
+With the second check and weight cap (Krypsis v2, 5 seeds), Mondrian
+reaches 99.97% accuracy under label flipping (no protocol: 82.6%,
+p = 0.045), catching 74.3% of poisoned updates while losing only 0.7% of
+honest ones. Details in Phase 12 below.
+
+The figures below come from Phases 8–11, which used the dataset's
+official split; they are generated from `results/*.json` by
+`src/make_plots.py`.
 
 **Protocol under attack** — label flipping by 2 of 10 clients, from round 6
 (Phases 8–9). The protocol keeps accuracy up; without it, accuracy swings.
@@ -803,6 +845,56 @@ plain HTTP/JSON would be 5.6× larger (Phase 8).
   test); a trust-dependent weight cap instead of a fixed one; scoring
   against a longer history than the current round, to survive heavy
   dropout; more FLNET2023 seeds so its differences can reach significance.
+- **Phase 12 — 70 / 15 / 15 re-split and overfitting check:** Done.
+  Phases 3–11 used the dataset's own split (router files for training,
+  the separate `TEST` capture for testing, about 88 / 12). That split
+  scored 100%, and it could not show whether the model overfits.
+  - **Duplicates:** `src/split_701515.py` loads the same sampled rows as
+    Phase 3 and finds **170,596 of 564,007 flows (30%) are exact
+    copies**, mostly normal traffic; 2 more flows have identical features
+    but different labels. All are removed (393,409 unique flows left), so
+    one flow can never be in two sets. The data becomes 89.8% attack
+    (was 65.9%).
+  - **Split:** inside each router, 70% train / 15% validation / 15% test,
+    stratified by attack type, so every set keeps that router's traffic
+    mix: 275,381 / 59,012 / 59,016 flows. The scaler is fitted on train
+    only. The old `TEST` capture is kept as an extra check, minus the
+    8,551 flows already in our data (70,940 left).
+  - **Routers after dedup:** attack share 44% (router 3) to 98% (router 4),
+    router 10 holds 26% of the training flows, router 3 only 4,104.
+  - **Overfitting check (`src/split_experiment.py`):** validation is used
+    for early stopping, threshold tuning and per-round curves; test is
+    used once. Train / validation / test accuracy: centralized 100 / 100 /
+    100% (1 error in 59,016 test flows), FedAvg router 99.97 / 99.97 /
+    99.96%, FedAvg IID 99.99 / 99.99 / 99.99%; the extra `TEST` capture
+    gives 99.99–100%. **No overfitting**: the near-perfect score comes from
+    the dataset being easy to separate, not from memorising.
+  - **Protocol, 15 seeds (`KRYPSIS_SPLIT=701515 protocol_experiment.py`):**
+    accuracy now swings strongly between rounds while attackers are
+    active (90% of the data is attack traffic, so flipped labels pull
+    hard), so the mean over the attack rounds 6–12 is reported next to
+    the last round. No protocol 81.9% (last round 76.5%), global 85.0%
+    (88.2%), **Mondrian 94.6%** (88.0%); Mondrian beats no protocol
+    (p = 0.002) and global (p = 0.007). Mondrian catches **70.0%** of
+    poisoned updates vs 29.5% for global (p < 0.001), but flags 12.9% of
+    honest updates vs 2.0% (p < 0.001), because this experiment drops
+    every flagged update. 105/105 tampered messages rejected.
+  - **v2 defenses, 5 seeds (`KRYPSIS_SPLIT=701515 defense_experiment.py`):**
+    label flipping — no protocol 82.6%, v1 73.4%, v2 global 83.8%,
+    **v2 Mondrian 99.97%** (p = 0.045 vs no protocol), catching 74.3% of
+    poisoned updates; the second check cuts Mondrian's honest losses to
+    **0.7%**. Backdoor: no protocol 99.66% accuracy / 7.8% success, v2
+    Mondrian 99.96% / 0% (not significant with 5 seeds).
+  - **Research question, revised:** on the deduplicated data the routers
+    differ much more (router 3 is under half attack traffic, most others
+    about 90%). One global threshold has to be loose enough for router 3
+    and misses attackers; per-cluster Mondrian thresholds can be strict
+    where it is safe. So **Mondrian thresholds do help** once client
+    heterogeneity is real, and the second check removes their extra false
+    alarms. The Phase 8–11 conclusion ("global is enough") held on the
+    duplicate-heavy split and is superseded here.
+  - The final-review deck (`presentation/build_final_review.py`) reads
+    these results.
 
 ## References
 

@@ -1,0 +1,145 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1792917895.299376    7628 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1792917907.641452    7628 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+{'train': 275381, 'val': 59012, 'test': 59016, 'capture': 70940}
+
+=== Centralized: 275381 train, 59012 validation flows ===
+I0000 00:00:1792917914.286382    7628 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE3 SSE4.1 SSE4.2 AVX AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING:tensorflow:TensorFlow GPU support is not available on native Windows for TensorFlow >= 2.11. Even if CUDA/cuDNN are installed, GPU will not be used. Please use WSL2 or the TensorFlow-DirectML plugin.
+Epoch 1/80
+1076/1076 - 5s - 5ms/step - accuracy: 0.9992 - loss: 0.0219 - val_accuracy: 0.9996 - val_loss: 0.0077
+Epoch 2/80
+1076/1076 - 5s - 5ms/step - accuracy: 0.9998 - loss: 0.0045 - val_accuracy: 0.9997 - val_loss: 0.0032
+Epoch 3/80
+1076/1076 - 3s - 3ms/step - accuracy: 0.9998 - loss: 0.0024 - val_accuracy: 0.9997 - val_loss: 0.0024
+Epoch 4/80
+1076/1076 - 3s - 3ms/step - accuracy: 0.9999 - loss: 0.0020 - val_accuracy: 0.9997 - val_loss: 0.0023
+Epoch 5/80
+1076/1076 - 3s - 3ms/step - accuracy: 0.9999 - loss: 0.0018 - val_accuracy: 0.9997 - val_loss: 0.0019
+Epoch 6/80
+1076/1076 - 5s - 5ms/step - accuracy: 0.9998 - loss: 0.0016 - val_accuracy: 0.9997 - val_loss: 0.0022
+Epoch 7/80
+1076/1076 - 3s - 3ms/step - accuracy: 0.9999 - loss: 0.0013 - val_accuracy: 0.9997 - val_loss: 0.0016
+Epoch 8/80
+1076/1076 - 5s - 5ms/step - accuracy: 0.9999 - loss: 0.0014 - val_accuracy: 0.9997 - val_loss: 0.0018
+Epoch 9/80
+1076/1076 - 3s - 3ms/step - accuracy: 0.9999 - loss: 0.0012 - val_accuracy: 0.9997 - val_loss: 0.0016
+Epoch 10/80
+1076/1076 - 5s - 5ms/step - accuracy: 0.9998 - loss: 0.0015 - val_accuracy: 0.9997 - val_loss: 0.0017
+Epoch 11/80
+1076/1076 - 3s - 3ms/step - accuracy: 0.9999 - loss: 0.0014 - val_accuracy: 0.9998 - val_loss: 0.0015
+Epoch 12/80
+1076/1076 - 3s - 3ms/step - accuracy: 0.9999 - loss: 0.0012 - val_accuracy: 0.9998 - val_loss: 0.0014
+Epoch 13/80
+1076/1076 - 3s - 3ms/step - accuracy: 0.9999 - loss: 0.0011 - val_accuracy: 0.9998 - val_loss: 0.0012
+Epoch 14/80
+1076/1076 - 5s - 5ms/step - accuracy: 0.9999 - loss: 0.0012 - val_accuracy: 0.9997 - val_loss: 0.0017
+Epoch 15/80
+1076/1076 - 5s - 4ms/step - accuracy: 0.9999 - loss: 0.0011 - val_accuracy: 0.9997 - val_loss: 0.0014
+Epoch 16/80
+1076/1076 - 6s - 6ms/step - accuracy: 0.9999 - loss: 9.9869e-04 - val_accuracy: 0.9997 - val_loss: 0.0016
+Epoch 17/80
+1076/1076 - 3s - 3ms/step - accuracy: 0.9999 - loss: 0.0011 - val_accuracy: 0.9998 - val_loss: 0.0014
+Epoch 18/80
+1076/1076 - 5s - 5ms/step - accuracy: 0.9999 - loss: 0.0011 - val_accuracy: 0.9997 - val_loss: 0.0016
+Epoch 19/80
+1076/1076 - 3s - 3ms/step - accuracy: 0.9999 - loss: 0.0011 - val_accuracy: 0.9997 - val_loss: 0.0016
+Epoch 20/80
+1076/1076 - 4s - 3ms/step - accuracy: 0.9999 - loss: 0.0011 - val_accuracy: 0.9998 - val_loss: 0.0017
+Epoch 21/80
+1076/1076 - 293s - 273ms/step - accuracy: 0.9999 - loss: 0.0012 - val_accuracy: 0.9998 - val_loss: 0.0013
+Epoch 22/80
+1076/1076 - 3s - 3ms/step - accuracy: 0.9999 - loss: 9.3716e-04 - val_accuracy: 0.9998 - val_loss: 0.0011
+Epoch 23/80
+1076/1076 - 3s - 3ms/step - accuracy: 0.9999 - loss: 0.0011 - val_accuracy: 0.9999 - val_loss: 0.0012
+Epoch 24/80
+1076/1076 - 5s - 5ms/step - accuracy: 0.9999 - loss: 9.1580e-04 - val_accuracy: 0.9997 - val_loss: 0.0013
+Epoch 25/80
+1076/1076 - 3s - 3ms/step - accuracy: 0.9999 - loss: 9.4220e-04 - val_accuracy: 0.9998 - val_loss: 0.0012
+Epoch 26/80
+1076/1076 - 3s - 3ms/step - accuracy: 0.9999 - loss: 0.0011 - val_accuracy: 0.9997 - val_loss: 0.0021
+Epoch 27/80
+1076/1076 - 5s - 5ms/step - accuracy: 0.9999 - loss: 0.0010 - val_accuracy: 0.9997 - val_loss: 0.0016
+Epoch 28/80
+1076/1076 - 3s - 3ms/step - accuracy: 0.9999 - loss: 9.9819e-04 - val_accuracy: 1.0000 - val_loss: 8.6806e-04
+Epoch 29/80
+1076/1076 - 5s - 4ms/step - accuracy: 0.9999 - loss: 0.0011 - val_accuracy: 0.9998 - val_loss: 0.0017
+Epoch 30/80
+1076/1076 - 5s - 5ms/step - accuracy: 0.9999 - loss: 9.2239e-04 - val_accuracy: 1.0000 - val_loss: 9.5411e-04
+Epoch 31/80
+1076/1076 - 3s - 3ms/step - accuracy: 0.9999 - loss: 9.8648e-04 - val_accuracy: 1.0000 - val_loss: 0.0010
+Epoch 32/80
+1076/1076 - 5s - 5ms/step - accuracy: 0.9999 - loss: 9.1479e-04 - val_accuracy: 0.9999 - val_loss: 0.0010
+Epoch 33/80
+1076/1076 - 5s - 5ms/step - accuracy: 0.9999 - loss: 8.6172e-04 - val_accuracy: 0.9999 - val_loss: 9.6928e-04
+Epoch 34/80
+1076/1076 - 5s - 5ms/step - accuracy: 0.9999 - loss: 0.0012 - val_accuracy: 1.0000 - val_loss: 0.0011
+Epoch 35/80
+1076/1076 - 5s - 5ms/step - accuracy: 0.9999 - loss: 8.7782e-04 - val_accuracy: 0.9997 - val_loss: 0.0012
+Epoch 36/80
+1076/1076 - 5s - 5ms/step - accuracy: 0.9999 - loss: 0.0011 - val_accuracy: 1.0000 - val_loss: 9.5929e-04
+Epoch 37/80
+1076/1076 - 5s - 5ms/step - accuracy: 0.9999 - loss: 8.4987e-04 - val_accuracy: 1.0000 - val_loss: 8.8212e-04
+Epoch 38/80
+1076/1076 - 5s - 5ms/step - accuracy: 0.9999 - loss: 9.3139e-04 - val_accuracy: 0.9999 - val_loss: 9.6058e-04
+
+Centralized: threshold 0.1
+  set       accuracy precision    recall        f1     loss
+  train       1.0000    1.0000    1.0000    1.0000   0.0008
+  val         1.0000    1.0000    1.0000    1.0000   0.0009
+  test        1.0000    1.0000    1.0000    1.0000   0.0009
+  capture     1.0000    1.0000    1.0000    1.0000   0.0007
+  train - test accuracy gap: +0.00 points
+
+=== FedAvg, router split, 10 clients, 15 rounds ===
+  round  1: train acc 0.9985  val acc 0.9983  train loss 0.0191  val loss 0.0193
+  round  2: train acc 0.9996  val acc 0.9996  train loss 0.0045  val loss 0.0046
+  round  3: train acc 0.9996  val acc 0.9996  train loss 0.0029  val loss 0.0030
+  round  4: train acc 0.9996  val acc 0.9996  train loss 0.0024  val loss 0.0025
+  round  5: train acc 0.9996  val acc 0.9996  train loss 0.0020  val loss 0.0020
+  round  6: train acc 0.9996  val acc 0.9996  train loss 0.0019  val loss 0.0020
+  round  7: train acc 0.9996  val acc 0.9996  train loss 0.0020  val loss 0.0021
+  round  8: train acc 0.9996  val acc 0.9996  train loss 0.0018  val loss 0.0019
+  round  9: train acc 0.9996  val acc 0.9996  train loss 0.0019  val loss 0.0020
+  round 10: train acc 0.9996  val acc 0.9996  train loss 0.0016  val loss 0.0017
+  round 11: train acc 0.9996  val acc 0.9996  train loss 0.0017  val loss 0.0018
+  round 12: train acc 0.9996  val acc 0.9996  train loss 0.0019  val loss 0.0020
+  round 13: train acc 0.9996  val acc 0.9996  train loss 0.0019  val loss 0.0020
+  round 14: train acc 0.9996  val acc 0.9996  train loss 0.0017  val loss 0.0018
+  round 15: train acc 0.9996  val acc 0.9996  train loss 0.0018  val loss 0.0019
+
+FedAvg (router): threshold 0.12
+  set       accuracy precision    recall        f1     loss
+  train       0.9997    1.0000    0.9997    0.9998   0.0018
+  val         0.9997    1.0000    0.9997    0.9998   0.0019
+  test        0.9996    1.0000    0.9996    0.9998   0.0021
+  capture     0.9999    1.0000    0.9999    0.9999   0.0009
+  train - test accuracy gap: +0.00 points
+
+=== FedAvg, iid split, 10 clients, 15 rounds ===
+  round  1: train acc 0.9996  val acc 0.9996  train loss 0.0224  val loss 0.0225
+  round  2: train acc 0.9997  val acc 0.9998  train loss 0.0057  val loss 0.0058
+  round  3: train acc 0.9999  val acc 0.9999  train loss 0.0030  val loss 0.0031
+  round  4: train acc 0.9999  val acc 0.9999  train loss 0.0023  val loss 0.0024
+  round  5: train acc 0.9999  val acc 0.9999  train loss 0.0019  val loss 0.0020
+  round  6: train acc 0.9999  val acc 0.9999  train loss 0.0018  val loss 0.0019
+  round  7: train acc 0.9999  val acc 0.9999  train loss 0.0016  val loss 0.0017
+  round  8: train acc 0.9999  val acc 0.9999  train loss 0.0015  val loss 0.0016
+  round  9: train acc 0.9999  val acc 0.9999  train loss 0.0014  val loss 0.0015
+  round 10: train acc 0.9999  val acc 0.9999  train loss 0.0014  val loss 0.0014
+  round 11: train acc 0.9999  val acc 0.9999  train loss 0.0013  val loss 0.0014
+  round 12: train acc 0.9999  val acc 0.9999  train loss 0.0013  val loss 0.0013
+  round 13: train acc 0.9999  val acc 0.9999  train loss 0.0012  val loss 0.0013
+  round 14: train acc 0.9999  val acc 0.9999  train loss 0.0012  val loss 0.0012
+  round 15: train acc 0.9999  val acc 0.9999  train loss 0.0012  val loss 0.0012
+
+FedAvg (iid): threshold 0.1
+  set       accuracy precision    recall        f1     loss
+  train       0.9999    0.9999    1.0000    0.9999   0.0012
+  val         0.9999    0.9999    1.0000    1.0000   0.0012
+  test        0.9999    1.0000    0.9999    0.9999   0.0013
+  capture     1.0000    1.0000    1.0000    1.0000   0.0010
+  train - test accuracy gap: +0.00 points
+Saved C:\Users\LENOVO\Documents\Krypsis-Vinudharshini18\results\split_701515\figures\loss_curves.png

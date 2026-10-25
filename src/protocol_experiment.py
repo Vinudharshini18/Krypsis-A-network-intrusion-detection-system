@@ -35,14 +35,18 @@ import numpy as np
 import tensorflow as tf
 from scipy import stats
 
-from model import build_model, load_processed_data
+from model import build_model
 from protocol import (AnomalyScorer, Fingerprinter, GlobalCalibrator,
                       MondrianCalibrator, flatten, http_json_size, is_flagged,
                       pack, unflatten, unpack)
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-PROCESSED_DIR = os.path.join(PROJECT_ROOT, "data", "processed")
-RESULTS_DIR = os.path.join(PROJECT_ROOT, "results")
+# KRYPSIS_SPLIT=701515 runs on the 70/15/15 split (src/split_701515.py) and
+# saves to results/split_701515/; unset = the original split and results.
+SPLIT = os.environ.get("KRYPSIS_SPLIT", "")
+PROCESSED_DIR = os.path.join(PROJECT_ROOT, "data",
+                             f"processed_{SPLIT}" if SPLIT else "processed")
+RESULTS_DIR = os.path.join(PROJECT_ROOT, "results", f"split_{SPLIT}" if SPLIT else "")
 
 NUM_SEEDS = 15
 NUM_ROUNDS = 12
@@ -228,7 +232,9 @@ def summarize(runs: list) -> dict:
 
 
 def main():
-    X, y, X_test, y_test = load_processed_data()
+    X, y, X_test, y_test = (np.load(os.path.join(PROCESSED_DIR, f"{n}.npy"))
+                            for n in ("X_train", "y_train", "X_test", "y_test"))
+    print(f"Data: {PROCESSED_DIR} ({len(y)} train, {len(y_test)} test flows)")
     assignment = np.load(os.path.join(PROCESSED_DIR, "client_assignment_router.npy"))
     shapes = [w.shape for w in build_model(X.shape[1]).get_weights()]
     fingerprinter = Fingerprinter(shapes)

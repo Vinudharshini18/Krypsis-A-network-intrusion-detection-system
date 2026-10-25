@@ -1,0 +1,119 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1792919169.112854   16476 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1792919172.470549   16476 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+Data: C:\Users\LENOVO\Documents\Krypsis-Vinudharshini18\data\processed_701515 (275381 train, 59016 test flows)
+I0000 00:00:1792919176.530061   16476 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE3 SSE4.1 SSE4.2 AVX AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING:tensorflow:TensorFlow GPU support is not available on native Windows for TensorFlow >= 2.11. Even if CUDA/cuDNN are installed, GPU will not be used. Please use WSL2 or the TensorFlow-DirectML plugin.
+Communication: raw payload 233476 B, Krypsis message 235035 B (+1559 B header+tag), HTTP/JSON 1315665 B
+seed  0 attackers [2, 6] none    : acc 0.9447 [1.1 min]
+seed  0 attackers [2, 6] global  : acc 0.1033, detect 0.29, FPR 0.041, tamper 7/7 [2.8 min]
+seed  0 attackers [2, 6] mondrian: acc 0.9996, detect 0.71, FPR 0.102, tamper 7/7 [3.9 min]
+seed  1 attackers [7, 9] none    : acc 0.7400 [5.1 min]
+seed  1 attackers [7, 9] global  : acc 0.9997, detect 0.43, FPR 0.020, tamper 7/7 [6.2 min]
+seed  1 attackers [7, 9] mondrian: acc 0.9996, detect 1.00, FPR 0.204, tamper 7/7 [7.5 min]
+seed  2 attackers [4, 6] none    : acc 0.7192 [8.8 min]
+seed  2 attackers [4, 6] global  : acc 0.9996, detect 0.29, FPR 0.000, tamper 7/7 [10.0 min]
+seed  2 attackers [4, 6] mondrian: acc 0.9996, detect 0.79, FPR 0.102, tamper 7/7 [11.2 min]
+seed  3 attackers [2, 3] none    : acc 0.7243 [14.5 min]
+seed  3 attackers [2, 3] global  : acc 0.9803, detect 0.07, FPR 0.020, tamper 7/7 [18.2 min]
+seed  3 attackers [2, 3] mondrian: acc 0.9993, detect 0.50, FPR 0.061, tamper 7/7 [21.7 min]
+seed  4 attackers [1, 7] none    : acc 0.9999 [24.6 min]
+seed  4 attackers [1, 7] global  : acc 0.7308, detect 0.14, FPR 0.000, tamper 7/7 [27.7 min]
+seed  4 attackers [1, 7] mondrian: acc 0.9996, detect 0.43, FPR 0.102, tamper 7/7 [55.3 min]
+seed  5 attackers [1, 4] none    : acc 0.7186 [116.2 min]
+seed  5 attackers [1, 4] global  : acc 0.9742, detect 0.29, FPR 0.041, tamper 7/7 [119.3 min]
+seed  5 attackers [1, 4] mondrian: acc 0.1033, detect 0.57, FPR 0.265, tamper 7/7 [127.8 min]
+seed  6 attackers [4, 5] none    : acc 0.8163 [133.2 min]
+seed  6 attackers [4, 5] global  : acc 0.9996, detect 0.29, FPR 0.000, tamper 7/7 [136.2 min]
+seed  6 attackers [4, 5] mondrian: acc 0.9996, detect 0.93, FPR 0.102, tamper 7/7 [151.6 min]
+seed  7 attackers [1, 10] none    : acc 0.5958 [154.6 min]
+seed  7 attackers [1, 10] global  : acc 0.5717, detect 0.21, FPR 0.000, tamper 7/7 [165.0 min]
+seed  7 attackers [1, 10] mondrian: acc 0.9996, detect 0.71, FPR 0.184, tamper 7/7 [168.1 min]
+seed  8 attackers [2, 4] none    : acc 0.5477 [171.3 min]
+seed  8 attackers [2, 4] global  : acc 0.9996, detect 0.36, FPR 0.020, tamper 7/7 [174.4 min]
+seed  8 attackers [2, 4] mondrian: acc 0.9996, detect 0.86, FPR 0.082, tamper 7/7 [177.6 min]
+seed  9 attackers [1, 7] none    : acc 0.9925 [180.7 min]
+seed  9 attackers [1, 7] global  : acc 0.8736, detect 0.14, FPR 0.000, tamper 7/7 [183.8 min]
+seed  9 attackers [1, 7] mondrian: acc 0.9994, detect 0.50, FPR 0.041, tamper 7/7 [346.4 min]
+seed 10 attackers [1, 7] none    : acc 0.9998 [348.9 min]
+seed 10 attackers [1, 7] global  : acc 0.9998, detect 0.43, FPR 0.020, tamper 7/7 [351.9 min]
+seed 10 attackers [1, 7] mondrian: acc 0.9993, detect 0.57, FPR 0.122, tamper 7/7 [354.9 min]
+seed 11 attackers [3, 10] none    : acc 0.7017 [362.8 min]
+seed 11 attackers [3, 10] global  : acc 0.9982, detect 0.36, FPR 0.122, tamper 7/7 [365.9 min]
+seed 11 attackers [3, 10] mondrian: acc 0.9999, detect 0.71, FPR 0.245, tamper 7/7 [368.9 min]
+seed 12 attackers [4, 7] none    : acc 0.4598 [378.8 min]
+seed 12 attackers [4, 7] global  : acc 0.9996, detect 0.29, FPR 0.020, tamper 7/7 [384.0 min]
+seed 12 attackers [4, 7] mondrian: acc 0.1033, detect 0.71, FPR 0.204, tamper 7/7 [387.4 min]
+seed 13 attackers [2, 8] none    : acc 0.5380 [390.5 min]
+seed 13 attackers [2, 8] global  : acc 0.9996, detect 0.57, FPR 0.000, tamper 7/7 [393.7 min]
+seed 13 attackers [2, 8] mondrian: acc 0.9996, detect 1.00, FPR 0.102, tamper 7/7 [400.2 min]
+seed 14 attackers [5, 6] none    : acc 0.9818 [403.5 min]
+seed 14 attackers [5, 6] global  : acc 0.9996, detect 0.29, FPR 0.000, tamper 7/7 [427.9 min]
+seed 14 attackers [5, 6] mondrian: acc 0.9995, detect 0.50, FPR 0.020, tamper 7/7 [471.7 min]
+
+{
+  "none": {
+    "final_accuracy_mean": 0.7653517690117935,
+    "final_accuracy_std": 0.1779594547177626
+  },
+  "global": {
+    "final_accuracy_mean": 0.8819450092630248,
+    "final_accuracy_std": 0.24054806197834736,
+    "detection_rate_mean": 0.2952380952380952,
+    "detection_rate_std": 0.1219642711891971,
+    "false_positive_rate_mean": 0.020408163265306124,
+    "false_positive_rate_std": 0.030725414396289022,
+    "tamper_sent": 105,
+    "tamper_rejected": 105,
+    "honest_fpr_by_router": {
+      "router_1": 0.014285714285714285,
+      "router_2": 0.0303030303030303,
+      "router_3": 0.03076923076923077,
+      "router_4": 0.10833333333333332,
+      "router_5": 0.0,
+      "router_6": 0.0,
+      "router_7": 0.0,
+      "router_8": 0.028571428571428574,
+      "router_9": 0.023809523809523808,
+      "router_10": 0.0
+    }
+  },
+  "mondrian": {
+    "final_accuracy_mean": 0.8800472188333107,
+    "final_accuracy_std": 0.3046610527942291,
+    "detection_rate_mean": 0.6999999999999998,
+    "detection_rate_std": 0.1810776508745861,
+    "false_positive_rate_mean": 0.12925170068027214,
+    "false_positive_rate_std": 0.07134754069184705,
+    "tamper_sent": 105,
+    "tamper_rejected": 105,
+    "honest_fpr_by_router": {
+      "router_1": 0.06285714285714286,
+      "router_2": 0.3805194805194805,
+      "router_3": 0.06373626373626373,
+      "router_4": 0.2654761904761904,
+      "router_5": 0.06227106227106227,
+      "router_6": 0.2023809523809524,
+      "router_7": 0.045,
+      "router_8": 0.15680272108843535,
+      "router_9": 0.08826530612244898,
+      "router_10": 0.05677655677655677
+    }
+  },
+  "paired_t_test_global_vs_mondrian": {
+    "false_positive_rate": {
+      "mean_difference_global_minus_mondrian": -0.10884353741496601,
+      "t": -6.903591418101532,
+      "p_value": 7.282297147525158e-06
+    },
+    "detection_rate": {
+      "mean_difference_global_minus_mondrian": -0.40476190476190477,
+      "t": -11.691415191891407,
+      "p_value": 1.3058113374393799e-08
+    }
+  }
+}
+
+Saved to C:\Users\LENOVO\Documents\Krypsis-Vinudharshini18\results\split_701515\protocol_experiment.json

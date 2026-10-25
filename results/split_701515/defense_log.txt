@@ -1,0 +1,222 @@
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1792919169.671066   13536 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1792919173.112867   13536 port.cc:153] oneDNN custom operations are on. You may see slightly different numerical results due to floating-point round-off errors from different computation orders. To turn them off, set the environment variable `TF_ENABLE_ONEDNN_OPTS=0`.
+I0000 00:00:1792919176.536798   13536 cpu_feature_guard.cc:227] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: SSE3 SSE4.1 SSE4.2 AVX AVX2 AVX_VNNI FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+WARNING:tensorflow:TensorFlow GPU support is not available on native Windows for TensorFlow >= 2.11. Even if CUDA/cuDNN are installed, GPU will not be used. Please use WSL2 or the TensorFlow-DirectML plugin.
+
+=== flnet: 275381 train rows, 10 clients, backdoor target 'DoS-slowhttp' (10057 train / 2156 test rows)
+flnet  label_flip seed 0 att [2, 6] none        acc 0.9447 ASR 0.171 [1.1 min]
+flnet  label_flip seed 0 att [2, 6] v1          acc 0.5633 ASR 0.347 caught 0.43 FPR 0.036 rescued h0/m0 [2.8 min]
+flnet  label_flip seed 0 att [2, 6] v2          acc 0.2041 ASR 1.000 caught 0.43 FPR 0.000 rescued h1/m0 [4.0 min]
+flnet  label_flip seed 0 att [2, 6] v2_mondrian acc 0.9996 ASR 0.000 caught 1.00 FPR 0.000 rescued h1/m0 [5.1 min]
+flnet  label_flip seed 1 att [7, 9] none        acc 0.7400 ASR 0.335 [6.3 min]
+flnet  label_flip seed 1 att [7, 9] v1          acc 0.9996 ASR 0.000 caught 0.57 FPR 0.000 rescued h0/m0 [7.5 min]
+flnet  label_flip seed 1 att [7, 9] v2          acc 0.9997 ASR 0.000 caught 0.29 FPR 0.000 rescued h0/m1 [8.8 min]
+C:\Users\LENOVO\Documents\Krypsis-Vinudharshini18\venv\Lib\site-packages\scipy\stats\_axis_nan_policy.py:431: RuntimeWarning: Precision loss occurred in moment calculation due to catastrophic cancellation. This occurs when the data are nearly identical. Results may be unreliable.
+  return hypotest_fun_in(*args, **kwds)
+flnet  label_flip seed 1 att [7, 9] v2_mondrian acc 0.9999 ASR 0.000 caught 0.86 FPR 0.018 rescued h0/m1 [10.0 min]
+flnet  label_flip seed 2 att [4, 6] none        acc 0.7192 ASR 0.250 [11.2 min]
+flnet  label_flip seed 2 att [4, 6] v1          acc 0.6875 ASR 0.340 caught 0.29 FPR 0.000 rescued h0/m0 [14.5 min]
+flnet  label_flip seed 2 att [4, 6] v2          acc 0.9879 ASR 0.000 caught 0.29 FPR 0.000 rescued h0/m0 [18.2 min]
+C:\Users\LENOVO\Documents\Krypsis-Vinudharshini18\venv\Lib\site-packages\scipy\stats\_axis_nan_policy.py:431: RuntimeWarning: Precision loss occurred in moment calculation due to catastrophic cancellation. This occurs when the data are nearly identical. Results may be unreliable.
+  return hypotest_fun_in(*args, **kwds)
+flnet  label_flip seed 2 att [4, 6] v2_mondrian acc 0.9997 ASR 0.000 caught 0.86 FPR 0.000 rescued h0/m1 [21.9 min]
+flnet  label_flip seed 3 att [2, 3] none        acc 0.7243 ASR 0.735 [25.0 min]
+flnet  label_flip seed 3 att [2, 3] v1          acc 0.5393 ASR 1.000 caught 0.07 FPR 0.000 rescued h0/m0 [28.1 min]
+flnet  label_flip seed 3 att [2, 3] v2          acc 0.9997 ASR 0.000 caught 0.14 FPR 0.000 rescued h0/m1 [55.7 min]
+flnet  label_flip seed 3 att [2, 3] v2_mondrian acc 0.9997 ASR 0.000 caught 0.50 FPR 0.018 rescued h9/m0 [116.8 min]
+flnet  label_flip seed 4 att [1, 7] none        acc 0.9999 ASR 0.000 [119.9 min]
+flnet  label_flip seed 4 att [1, 7] v1          acc 0.8789 ASR 0.316 caught 0.14 FPR 0.018 rescued h0/m0 [128.6 min]
+flnet  label_flip seed 4 att [1, 7] v2          acc 0.9997 ASR 0.000 caught 0.43 FPR 0.018 rescued h0/m0 [134.0 min]
+flnet  label_flip seed 4 att [1, 7] v2_mondrian acc 0.9996 ASR 0.000 caught 0.50 FPR 0.000 rescued h9/m0 [149.5 min]
+flnet  backdoor   seed 0 att [2, 6] none        acc 0.9852 ASR 0.388 [152.9 min]
+flnet  backdoor   seed 0 att [2, 6] v1          acc 0.9994 ASR 0.002 caught 0.21 FPR 0.054 rescued h0/m0 [163.5 min]
+flnet  backdoor   seed 0 att [2, 6] v2          acc 0.9997 ASR 0.000 caught 0.29 FPR 0.000 rescued h4/m1 [166.7 min]
+flnet  backdoor   seed 0 att [2, 6] v2_mondrian acc 0.9994 ASR 0.000 caught 0.79 FPR 0.018 rescued h4/m0 [170.0 min]
+flnet  backdoor   seed 1 att [7, 9] none        acc 0.9993 ASR 0.002 [173.3 min]
+flnet  backdoor   seed 1 att [7, 9] v1          acc 0.9995 ASR 0.000 caught 0.14 FPR 0.000 rescued h0/m0 [176.5 min]
+flnet  backdoor   seed 1 att [7, 9] v2          acc 0.9899 ASR 0.257 caught 0.00 FPR 0.000 rescued h0/m0 [179.8 min]
+flnet  backdoor   seed 1 att [7, 9] v2_mondrian acc 0.9997 ASR 0.000 caught 0.86 FPR 0.000 rescued h1/m1 [183.1 min]
+flnet  backdoor   seed 2 att [4, 6] none        acc 0.9993 ASR 0.002 [346.2 min]
+flnet  backdoor   seed 2 att [4, 6] v1          acc 0.9993 ASR 0.002 caught 0.00 FPR 0.000 rescued h0/m0 [348.5 min]
+flnet  backdoor   seed 2 att [4, 6] v2          acc 0.9998 ASR 0.000 caught 0.14 FPR 0.000 rescued h0/m0 [351.7 min]
+flnet  backdoor   seed 2 att [4, 6] v2_mondrian acc 0.9998 ASR 0.000 caught 0.79 FPR 0.000 rescued h1/m0 [355.1 min]
+flnet  backdoor   seed 3 att [2, 3] none        acc 0.9995 ASR 0.000 [363.0 min]
+flnet  backdoor   seed 3 att [2, 3] v1          acc 0.9996 ASR 0.000 caught 0.00 FPR 0.018 rescued h0/m0 [366.3 min]
+flnet  backdoor   seed 3 att [2, 3] v2          acc 0.9997 ASR 0.000 caught 0.00 FPR 0.000 rescued h0/m0 [376.3 min]
+flnet  backdoor   seed 3 att [2, 3] v2_mondrian acc 0.9996 ASR 0.000 caught 0.43 FPR 0.000 rescued h9/m0 [381.5 min]
+flnet  backdoor   seed 4 att [1, 7] none        acc 0.9997 ASR 0.000 [384.8 min]
+flnet  backdoor   seed 4 att [1, 7] v1          acc 0.9997 ASR 0.000 caught 0.14 FPR 0.000 rescued h0/m0 [388.3 min]
+flnet  backdoor   seed 4 att [1, 7] v2          acc 0.9997 ASR 0.000 caught 0.00 FPR 0.000 rescued h0/m1 [391.6 min]
+flnet  backdoor   seed 4 att [1, 7] v2_mondrian acc 0.9997 ASR 0.000 caught 0.00 FPR 0.000 rescued h8/m7 [397.4 min]
+
+{
+  "flnet/label_flip": {
+    "none": {
+      "runs": 5,
+      "accuracy_mean": 0.8256405042700286,
+      "accuracy_std": 0.12119405179286323,
+      "clean_accuracy_mean": 0.8303341540626098,
+      "clean_accuracy_std": 0.11910856622689166,
+      "backdoor_asr_mean": 0.29814471243042673,
+      "backdoor_asr_std": 0.24470908976101938
+    },
+    "v1": {
+      "runs": 5,
+      "accuracy_mean": 0.7337196692422394,
+      "accuracy_std": 0.17928174256819818,
+      "clean_accuracy_mean": 0.7388181498417166,
+      "clean_accuracy_std": 0.17681465746113165,
+      "backdoor_asr_mean": 0.40074211502782936,
+      "backdoor_asr_std": 0.32660702850142737,
+      "detection_rate_mean": 0.29999999999999993,
+      "detection_rate_std": 0.18294640678379567,
+      "false_positive_rate_mean": 0.010714285714285714,
+      "false_positive_rate_std": 0.014285714285714285,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    "v2": {
+      "runs": 5,
+      "accuracy_mean": 0.8382099769554019,
+      "accuracy_std": 0.3171063601113891,
+      "clean_accuracy_mean": 0.8396588111150194,
+      "clean_accuracy_std": 0.3139648803862194,
+      "backdoor_asr_mean": 0.2,
+      "backdoor_asr_std": 0.4000000000000001,
+      "detection_rate_mean": 0.3142857142857143,
+      "detection_rate_std": 0.10690449676496976,
+      "false_positive_rate_mean": 0.0035714285714285713,
+      "false_positive_rate_std": 0.007142857142857143,
+      "rescued_honest": 1,
+      "rescued_malicious": 2
+    },
+    "v2_mondrian": {
+      "runs": 5,
+      "accuracy_mean": 0.9997017757896163,
+      "accuracy_std": 8.811169852241867e-05,
+      "clean_accuracy_mean": 0.9996904678156877,
+      "clean_accuracy_std": 9.145269081957204e-05,
+      "backdoor_asr_mean": 0.0,
+      "backdoor_asr_std": 0.0,
+      "detection_rate_mean": 0.7428571428571429,
+      "detection_rate_std": 0.20503857277724746,
+      "false_positive_rate_mean": 0.007142857142857143,
+      "false_positive_rate_std": 0.008748177652797066,
+      "rescued_honest": 19,
+      "rescued_malicious": 2
+    },
+    "paired_tests": {
+      "v2_minus_v1_accuracy": {
+        "n": 5,
+        "mean_difference": 0.10449030771316252,
+        "t": 0.7471241983310276,
+        "p_value": 0.4965135222034252
+      },
+      "v1_minus_none_accuracy": {
+        "n": 5,
+        "mean_difference": -0.09192083502778906,
+        "t": -0.8755131243908177,
+        "p_value": 0.43072034013150007
+      },
+      "v2_minus_v2_mondrian_detection": {
+        "n": 5,
+        "mean_difference": -0.42857142857142855,
+        "t": -4.35285750066007,
+        "p_value": 0.01212986047766725
+      },
+      "v2_minus_v2_mondrian_fpr": {
+        "n": 5,
+        "mean_difference": -0.0035714285714285713,
+        "t": -0.5345224838248488,
+        "p_value": 0.6213082950374971
+      }
+    }
+  },
+  "flnet/backdoor": {
+    "none": {
+      "runs": 5,
+      "accuracy_mean": 0.9966009217839231,
+      "accuracy_std": 0.00571528241419197,
+      "clean_accuracy_mean": 0.9994477664438973,
+      "clean_accuracy_std": 0.0001221509346056109,
+      "backdoor_asr_mean": 0.07847866419294991,
+      "backdoor_asr_std": 0.15464169685342183
+    },
+    "v1": {
+      "runs": 5,
+      "accuracy_mean": 0.9995018300122002,
+      "accuracy_std": 0.00014321910403359878,
+      "clean_accuracy_mean": 0.9995145972564192,
+      "clean_accuracy_std": 0.00011697706048761829,
+      "backdoor_asr_mean": 0.0008348794063079777,
+      "backdoor_asr_std": 0.0010329804012671655,
+      "detection_rate_mean": 0.09999999999999999,
+      "detection_rate_std": 0.08571428571428572,
+      "false_positive_rate_mean": 0.014285714285714285,
+      "false_positive_rate_std": 0.020824828195876072,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    "v2": {
+      "runs": 5,
+      "accuracy_mean": 0.997742984953233,
+      "accuracy_std": 0.003929579863777308,
+      "clean_accuracy_mean": 0.9996060499472389,
+      "clean_accuracy_std": 0.00018432040107737804,
+      "backdoor_asr_mean": 0.05139146567717996,
+      "backdoor_asr_std": 0.10278293135435994,
+      "detection_rate_mean": 0.08571428571428572,
+      "detection_rate_std": 0.11428571428571428,
+      "false_positive_rate_mean": 0.0,
+      "false_positive_rate_std": 0.0,
+      "rescued_honest": 4,
+      "rescued_malicious": 2
+    },
+    "v2_mondrian": {
+      "runs": 5,
+      "accuracy_mean": 0.9996339975599838,
+      "accuracy_std": 0.00012247059102337495,
+      "clean_accuracy_mean": 0.9996201195919803,
+      "clean_accuracy_std": 0.00012711439324373044,
+      "backdoor_asr_mean": 0.0,
+      "backdoor_asr_std": 0.0,
+      "detection_rate_mean": 0.5714285714285714,
+      "detection_rate_std": 0.3226168511610347,
+      "false_positive_rate_mean": 0.0035714285714285713,
+      "false_positive_rate_std": 0.007142857142857143,
+      "rescued_honest": 23,
+      "rescued_malicious": 8
+    },
+    "paired_tests": {
+      "v2_minus_v1_backdoor_asr": {
+        "n": 5,
+        "mean_difference": 0.050556586270871985,
+        "t": 0.9797342172776521,
+        "p_value": 0.3826899699212068
+      },
+      "v1_minus_none_backdoor_asr": {
+        "n": 5,
+        "mean_difference": -0.07764378478664194,
+        "t": -1.0075062148744636,
+        "p_value": 0.3706904427982824
+      },
+      "v2_minus_v2_mondrian_detection": {
+        "n": 5,
+        "mean_difference": -0.48571428571428565,
+        "t": -3.4257905086471725,
+        "p_value": 0.02663825244421738
+      },
+      "v2_minus_v2_mondrian_fpr": {
+        "n": 5,
+        "mean_difference": -0.0035714285714285713,
+        "t": -1.0,
+        "p_value": 0.37390096630005887
+      }
+    }
+  }
+}
+
+Saved to C:\Users\LENOVO\Documents\Krypsis-Vinudharshini18\results\split_701515\defense_experiment.json

@@ -1,0 +1,3509 @@
+{
+  "config": {
+    "seeds_per_dataset": {
+      "nslkdd": 10,
+      "flnet": 5
+    },
+    "num_rounds": 12,
+    "calibration_rounds": 5,
+    "num_attackers": 2,
+    "local_epochs": 1,
+    "alpha": 0.05,
+    "num_clusters": 3,
+    "weight_cap_factor": 1.5,
+    "trim_fraction": 0.2,
+    "backdoor_ratio": 0.5,
+    "backdoor_targets": {
+      "flnet": "DoS-slowhttp",
+      "nslkdd": "satan"
+    }
+  },
+  "summary": {
+    "flnet/label_flip": {
+      "none": {
+        "runs": 5,
+        "accuracy_mean": 0.8256405042700286,
+        "accuracy_std": 0.12119405179286323,
+        "clean_accuracy_mean": 0.8303341540626098,
+        "clean_accuracy_std": 0.11910856622689166,
+        "backdoor_asr_mean": 0.29814471243042673,
+        "backdoor_asr_std": 0.24470908976101938
+      },
+      "v1": {
+        "runs": 5,
+        "accuracy_mean": 0.7337196692422394,
+        "accuracy_std": 0.17928174256819818,
+        "clean_accuracy_mean": 0.7388181498417166,
+        "clean_accuracy_std": 0.17681465746113165,
+        "backdoor_asr_mean": 0.40074211502782936,
+        "backdoor_asr_std": 0.32660702850142737,
+        "detection_rate_mean": 0.29999999999999993,
+        "detection_rate_std": 0.18294640678379567,
+        "false_positive_rate_mean": 0.010714285714285714,
+        "false_positive_rate_std": 0.014285714285714285,
+        "rescued_honest": 0,
+        "rescued_malicious": 0
+      },
+      "v2": {
+        "runs": 5,
+        "accuracy_mean": 0.8382099769554019,
+        "accuracy_std": 0.3171063601113891,
+        "clean_accuracy_mean": 0.8396588111150194,
+        "clean_accuracy_std": 0.3139648803862194,
+        "backdoor_asr_mean": 0.2,
+        "backdoor_asr_std": 0.4000000000000001,
+        "detection_rate_mean": 0.3142857142857143,
+        "detection_rate_std": 0.10690449676496976,
+        "false_positive_rate_mean": 0.0035714285714285713,
+        "false_positive_rate_std": 0.007142857142857143,
+        "rescued_honest": 1,
+        "rescued_malicious": 2
+      },
+      "v2_mondrian": {
+        "runs": 5,
+        "accuracy_mean": 0.9997017757896163,
+        "accuracy_std": 8.811169852241867e-05,
+        "clean_accuracy_mean": 0.9996904678156877,
+        "clean_accuracy_std": 9.145269081957204e-05,
+        "backdoor_asr_mean": 0.0,
+        "backdoor_asr_std": 0.0,
+        "detection_rate_mean": 0.7428571428571429,
+        "detection_rate_std": 0.20503857277724746,
+        "false_positive_rate_mean": 0.007142857142857143,
+        "false_positive_rate_std": 0.008748177652797066,
+        "rescued_honest": 19,
+        "rescued_malicious": 2
+      },
+      "paired_tests": {
+        "v2_minus_v1_accuracy": {
+          "n": 5,
+          "mean_difference": 0.10449030771316252,
+          "t": 0.7471241983310276,
+          "p_value": 0.4965135222034252
+        },
+        "v1_minus_none_accuracy": {
+          "n": 5,
+          "mean_difference": -0.09192083502778906,
+          "t": -0.8755131243908177,
+          "p_value": 0.43072034013150007
+        },
+        "v2_minus_v2_mondrian_detection": {
+          "n": 5,
+          "mean_difference": -0.42857142857142855,
+          "t": -4.35285750066007,
+          "p_value": 0.01212986047766725
+        },
+        "v2_minus_v2_mondrian_fpr": {
+          "n": 5,
+          "mean_difference": -0.0035714285714285713,
+          "t": -0.5345224838248488,
+          "p_value": 0.6213082950374971
+        }
+      }
+    },
+    "flnet/backdoor": {
+      "none": {
+        "runs": 5,
+        "accuracy_mean": 0.9966009217839231,
+        "accuracy_std": 0.00571528241419197,
+        "clean_accuracy_mean": 0.9994477664438973,
+        "clean_accuracy_std": 0.0001221509346056109,
+        "backdoor_asr_mean": 0.07847866419294991,
+        "backdoor_asr_std": 0.15464169685342183
+      },
+      "v1": {
+        "runs": 5,
+        "accuracy_mean": 0.9995018300122002,
+        "accuracy_std": 0.00014321910403359878,
+        "clean_accuracy_mean": 0.9995145972564192,
+        "clean_accuracy_std": 0.00011697706048761829,
+        "backdoor_asr_mean": 0.0008348794063079777,
+        "backdoor_asr_std": 0.0010329804012671655,
+        "detection_rate_mean": 0.09999999999999999,
+        "detection_rate_std": 0.08571428571428572,
+        "false_positive_rate_mean": 0.014285714285714285,
+        "false_positive_rate_std": 0.020824828195876072,
+        "rescued_honest": 0,
+        "rescued_malicious": 0
+      },
+      "v2": {
+        "runs": 5,
+        "accuracy_mean": 0.997742984953233,
+        "accuracy_std": 0.003929579863777308,
+        "clean_accuracy_mean": 0.9996060499472389,
+        "clean_accuracy_std": 0.00018432040107737804,
+        "backdoor_asr_mean": 0.05139146567717996,
+        "backdoor_asr_std": 0.10278293135435994,
+        "detection_rate_mean": 0.08571428571428572,
+        "detection_rate_std": 0.11428571428571428,
+        "false_positive_rate_mean": 0.0,
+        "false_positive_rate_std": 0.0,
+        "rescued_honest": 4,
+        "rescued_malicious": 2
+      },
+      "v2_mondrian": {
+        "runs": 5,
+        "accuracy_mean": 0.9996339975599838,
+        "accuracy_std": 0.00012247059102337495,
+        "clean_accuracy_mean": 0.9996201195919803,
+        "clean_accuracy_std": 0.00012711439324373044,
+        "backdoor_asr_mean": 0.0,
+        "backdoor_asr_std": 0.0,
+        "detection_rate_mean": 0.5714285714285714,
+        "detection_rate_std": 0.3226168511610347,
+        "false_positive_rate_mean": 0.0035714285714285713,
+        "false_positive_rate_std": 0.007142857142857143,
+        "rescued_honest": 23,
+        "rescued_malicious": 8
+      },
+      "paired_tests": {
+        "v2_minus_v1_backdoor_asr": {
+          "n": 5,
+          "mean_difference": 0.050556586270871985,
+          "t": 0.9797342172776521,
+          "p_value": 0.3826899699212068
+        },
+        "v1_minus_none_backdoor_asr": {
+          "n": 5,
+          "mean_difference": -0.07764378478664194,
+          "t": -1.0075062148744636,
+          "p_value": 0.3706904427982824
+        },
+        "v2_minus_v2_mondrian_detection": {
+          "n": 5,
+          "mean_difference": -0.48571428571428565,
+          "t": -3.4257905086471725,
+          "p_value": 0.02663825244421738
+        },
+        "v2_minus_v2_mondrian_fpr": {
+          "n": 5,
+          "mean_difference": -0.0035714285714285713,
+          "t": -1.0,
+          "p_value": 0.37390096630005887
+        }
+      }
+    }
+  },
+  "runs": [
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "none",
+      "seed": 0,
+      "attackers": [
+        1,
+        5
+      ],
+      "final": {
+        "accuracy": 0.9447099091771723,
+        "clean_accuracy": 0.9490854730918045,
+        "backdoor_asr": 0.17068645640074212
+      },
+      "by_round": [
+        {
+          "accuracy": 0.99852582350549,
+          "clean_accuracy": 0.9984699261343651,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985088789480818,
+          "clean_accuracy": 0.9984523390784382,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.22060119289684155,
+          "clean_accuracy": 0.22896588111150193,
+          "backdoor_asr": 1.0
+        },
+        {
+          "accuracy": 0.9997458316388776,
+          "clean_accuracy": 0.9997361941610974,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.7312932086213908,
+          "clean_accuracy": 0.7306014773126979,
+          "backdoor_asr": 0.2504638218923933
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.39453707469160904,
+          "clean_accuracy": 0.40949701020049245,
+          "backdoor_asr": 1.0
+        },
+        {
+          "accuracy": 0.9997627761962857,
+          "clean_accuracy": 0.9997537812170243,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9447099091771723,
+          "clean_accuracy": 0.9490854730918045,
+          "backdoor_asr": 0.17068645640074212
+        }
+      ],
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.0,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "v1",
+      "seed": 0,
+      "attackers": [
+        1,
+        5
+      ],
+      "final": {
+        "accuracy": 0.5632879219194795,
+        "clean_accuracy": 0.5598839254308828,
+        "backdoor_asr": 0.3469387755102041
+      },
+      "by_round": [
+        {
+          "accuracy": 0.99852582350549,
+          "clean_accuracy": 0.9984699261343651,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985088789480818,
+          "clean_accuracy": 0.9984523390784382,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.4467771451809679,
+          "clean_accuracy": 0.438287020752726,
+          "backdoor_asr": 0.3293135435992579
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.4378981970990918,
+          "clean_accuracy": 0.44551530073865636,
+          "backdoor_asr": 0.762987012987013
+        },
+        {
+          "accuracy": 0.9997288870814695,
+          "clean_accuracy": 0.9997186071051706,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.5632879219194795,
+          "clean_accuracy": 0.5598839254308828,
+          "backdoor_asr": 0.3469387755102041
+        }
+      ],
+      "detection_rate": 0.42857142857142855,
+      "false_positive_rate": 0.03571428571428571,
+      "flagged_rate_malicious": 0.42857142857142855,
+      "flagged_rate_honest": 0.03571428571428571,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "v2",
+      "seed": 0,
+      "attackers": [
+        1,
+        5
+      ],
+      "final": {
+        "accuracy": 0.2040633048664769,
+        "clean_accuracy": 0.2118009145269082,
+        "backdoor_asr": 1.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9983055442591839,
+          "clean_accuracy": 0.9982412944073162,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985597126203064,
+          "clean_accuracy": 0.9985051002462187,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996272197370205,
+          "clean_accuracy": 0.9996130847696095,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.18759319506574487,
+          "clean_accuracy": 0.185033415406261,
+          "backdoor_asr": 0.7448979591836735
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.5271451809678731,
+          "clean_accuracy": 0.521684839957791,
+          "backdoor_asr": 0.32884972170686455
+        },
+        {
+          "accuracy": 0.9998136098685102,
+          "clean_accuracy": 0.9998065423848048,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.2040633048664769,
+          "clean_accuracy": 0.2118009145269082,
+          "backdoor_asr": 1.0
+        }
+      ],
+      "detection_rate": 0.42857142857142855,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.42857142857142855,
+      "flagged_rate_honest": 0.017857142857142856,
+      "rescued_honest": 1,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "v2_mondrian",
+      "seed": 0,
+      "attackers": [
+        1,
+        5
+      ],
+      "final": {
+        "accuracy": 0.9996102751796123,
+        "clean_accuracy": 0.9995954977136827,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9983055442591839,
+          "clean_accuracy": 0.9982412944073162,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985597126203064,
+          "clean_accuracy": 0.9985051002462187,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996272197370205,
+          "clean_accuracy": 0.9996130847696095,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996272197370205,
+          "clean_accuracy": 0.9996130847696095,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996272197370205,
+          "clean_accuracy": 0.9996130847696095,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 1.0,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 1.0,
+      "flagged_rate_honest": 0.017857142857142856,
+      "rescued_honest": 1,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "none",
+      "seed": 1,
+      "attackers": [
+        6,
+        8
+      ],
+      "final": {
+        "accuracy": 0.7400366002440016,
+        "clean_accuracy": 0.7428948294055575,
+        "backdoor_asr": 0.33534322820037105
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9986952690795716,
+          "clean_accuracy": 0.9986457966936335,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9992713840314491,
+          "clean_accuracy": 0.999243756595146,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.19520130134200894,
+          "clean_accuracy": 0.202602884277172,
+          "backdoor_asr": 1.0
+        },
+        {
+          "accuracy": 0.9998813880981429,
+          "clean_accuracy": 0.9998768906085121,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9994577741629389,
+          "clean_accuracy": 0.9994372142103412,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.7400366002440016,
+          "clean_accuracy": 0.7428948294055575,
+          "backdoor_asr": 0.33534322820037105
+        }
+      ],
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.0,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "v1",
+      "seed": 1,
+      "attackers": [
+        6,
+        8
+      ],
+      "final": {
+        "accuracy": 0.9995594415073878,
+        "clean_accuracy": 0.9995427365459022,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9986952690795716,
+          "clean_accuracy": 0.9986457966936335,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9992713840314491,
+          "clean_accuracy": 0.999243756595146,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997458316388776,
+          "clean_accuracy": 0.9997361941610974,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.5714285714285714,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.5714285714285714,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "v2",
+      "seed": 1,
+      "attackers": [
+        6,
+        8
+      ],
+      "final": {
+        "accuracy": 0.9997288870814695,
+        "clean_accuracy": 0.9997186071051706,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985597126203064,
+          "clean_accuracy": 0.9985051002462187,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9030601870679138,
+          "clean_accuracy": 0.8999120647203658,
+          "backdoor_asr": 0.013914656771799629
+        },
+        {
+          "accuracy": 0.9998813880981429,
+          "clean_accuracy": 0.9998768906085121,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.8466348108987394,
+          "clean_accuracy": 0.8504572634540978,
+          "backdoor_asr": 0.2541743970315399
+        },
+        {
+          "accuracy": 0.9998644435407347,
+          "clean_accuracy": 0.9998593035525853,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9998305544259184,
+          "clean_accuracy": 0.9998241294407316,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997288870814695,
+          "clean_accuracy": 0.9997186071051706,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.2857142857142857,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.35714285714285715,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 1
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "v2_mondrian",
+      "seed": 1,
+      "attackers": [
+        6,
+        8
+      ],
+      "final": {
+        "accuracy": 0.9998644435407347,
+        "clean_accuracy": 0.9998593035525853,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985597126203064,
+          "clean_accuracy": 0.9985051002462187,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9030601870679138,
+          "clean_accuracy": 0.8999120647203658,
+          "backdoor_asr": 0.013914656771799629
+        },
+        {
+          "accuracy": 0.999678053409245,
+          "clean_accuracy": 0.99966584593739,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9998644435407347,
+          "clean_accuracy": 0.9998593035525853,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9998136098685102,
+          "clean_accuracy": 0.9998065423848048,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9998644435407347,
+          "clean_accuracy": 0.9998593035525853,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9998644435407347,
+          "clean_accuracy": 0.9998593035525853,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9998644435407347,
+          "clean_accuracy": 0.9998593035525853,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.8571428571428571,
+      "false_positive_rate": 0.017857142857142856,
+      "flagged_rate_malicious": 0.9285714285714286,
+      "flagged_rate_honest": 0.017857142857142856,
+      "rescued_honest": 0,
+      "rescued_malicious": 1
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "none",
+      "seed": 2,
+      "attackers": [
+        3,
+        5
+      ],
+      "final": {
+        "accuracy": 0.7192456283041887,
+        "clean_accuracy": 0.7180794934927893,
+        "backdoor_asr": 0.25
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.10232818218788126,
+          "clean_accuracy": 0.10620823074217375,
+          "backdoor_asr": 1.0
+        },
+        {
+          "accuracy": 0.9997458316388776,
+          "clean_accuracy": 0.9997361941610974,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.981310153178799,
+          "clean_accuracy": 0.9812697854379177,
+          "backdoor_asr": 0.017625231910946195
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.10232818218788126,
+          "clean_accuracy": 0.10620823074217375,
+          "backdoor_asr": 1.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.7192456283041887,
+          "clean_accuracy": 0.7180794934927893,
+          "backdoor_asr": 0.25
+        }
+      ],
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.0,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "v1",
+      "seed": 2,
+      "attackers": [
+        3,
+        5
+      ],
+      "final": {
+        "accuracy": 0.6875423613935204,
+        "clean_accuracy": 0.6886035877594091,
+        "backdoor_asr": 0.3404452690166976
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.10232818218788126,
+          "clean_accuracy": 0.10620823074217375,
+          "backdoor_asr": 1.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.90751660566626,
+          "clean_accuracy": 0.9090925079141752,
+          "backdoor_asr": 0.13404452690166976
+        },
+        {
+          "accuracy": 0.9997458316388776,
+          "clean_accuracy": 0.9997361941610974,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.998627490849939,
+          "clean_accuracy": 0.9991030601477313,
+          "backdoor_asr": 0.013914656771799629
+        },
+        {
+          "accuracy": 0.9992883285888573,
+          "clean_accuracy": 0.9992613436510728,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.6875423613935204,
+          "clean_accuracy": 0.6886035877594091,
+          "backdoor_asr": 0.3404452690166976
+        }
+      ],
+      "detection_rate": 0.2857142857142857,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.2857142857142857,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "v2",
+      "seed": 2,
+      "attackers": [
+        3,
+        5
+      ],
+      "final": {
+        "accuracy": 0.9878846414531652,
+        "clean_accuracy": 0.9874252550123109,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.10232818218788126,
+          "clean_accuracy": 0.10620823074217375,
+          "backdoor_asr": 1.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.8868611901857123,
+          "clean_accuracy": 0.8899402040098487,
+          "backdoor_asr": 0.19434137291280149
+        },
+        {
+          "accuracy": 0.9997966653111021,
+          "clean_accuracy": 0.9997889553288779,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9887657584383895,
+          "clean_accuracy": 0.9889553288779458,
+          "backdoor_asr": 0.016233766233766232
+        },
+        {
+          "accuracy": 0.9878846414531652,
+          "clean_accuracy": 0.9874252550123109,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.2857142857142857,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.2857142857142857,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "v2_mondrian",
+      "seed": 2,
+      "attackers": [
+        3,
+        5
+      ],
+      "final": {
+        "accuracy": 0.999678053409245,
+        "clean_accuracy": 0.99966584593739,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.10232818218788126,
+          "clean_accuracy": 0.10620823074217375,
+          "backdoor_asr": 1.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996611088518368,
+          "clean_accuracy": 0.9996482588814632,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996949979666531,
+          "clean_accuracy": 0.999683432993317,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996949979666531,
+          "clean_accuracy": 0.999683432993317,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999678053409245,
+          "clean_accuracy": 0.99966584593739,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.8571428571428571,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.9285714285714286,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 1
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "none",
+      "seed": 3,
+      "attackers": [
+        1,
+        2
+      ],
+      "final": {
+        "accuracy": 0.724345940084045,
+        "clean_accuracy": 0.741751670770313,
+        "backdoor_asr": 0.7346938775510204
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985936017351227,
+          "clean_accuracy": 0.9985402743580725,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9994577741629389,
+          "clean_accuracy": 0.9994372142103412,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9812254303917581,
+          "clean_accuracy": 0.9810939148786493,
+          "backdoor_asr": 0.015306122448979591
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.5375491392164836,
+          "clean_accuracy": 0.5579317622230039,
+          "backdoor_asr": 1.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9953910803849804,
+          "clean_accuracy": 0.9957439324657053,
+          "backdoor_asr": 0.013914656771799629
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.724345940084045,
+          "clean_accuracy": 0.741751670770313,
+          "backdoor_asr": 0.7346938775510204
+        }
+      ],
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.0,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "v1",
+      "seed": 3,
+      "attackers": [
+        1,
+        2
+      ],
+      "final": {
+        "accuracy": 0.5393283177443405,
+        "clean_accuracy": 0.5597784030953219,
+        "backdoor_asr": 1.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985936017351227,
+          "clean_accuracy": 0.9985402743580725,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9994577741629389,
+          "clean_accuracy": 0.9994372142103412,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9767520672360038,
+          "clean_accuracy": 0.9767147379528667,
+          "backdoor_asr": 0.022263450834879406
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.7218212010302291,
+          "clean_accuracy": 0.7392015476609216,
+          "backdoor_asr": 0.7365491651205937
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9859360173512268,
+          "clean_accuracy": 0.9860886387618713,
+          "backdoor_asr": 0.018089053803339517
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.5393283177443405,
+          "clean_accuracy": 0.5597784030953219,
+          "backdoor_asr": 1.0
+        }
+      ],
+      "detection_rate": 0.07142857142857142,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.07142857142857142,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "v2",
+      "seed": 3,
+      "attackers": [
+        1,
+        2
+      ],
+      "final": {
+        "accuracy": 0.9997119425240613,
+        "clean_accuracy": 0.9997010200492438,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985936017351227,
+          "clean_accuracy": 0.9985402743580725,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.8690355157923275,
+          "clean_accuracy": 0.873320436158987,
+          "backdoor_asr": 0.24397031539888683
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.998830825538837,
+          "clean_accuracy": 0.9993141048188533,
+          "backdoor_asr": 0.013914656771799629
+        },
+        {
+          "accuracy": 0.9993561068184899,
+          "clean_accuracy": 0.9993316918747802,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.5343466178663413,
+          "clean_accuracy": 0.5546078086528315,
+          "backdoor_asr": 1.0
+        },
+        {
+          "accuracy": 0.9997119425240613,
+          "clean_accuracy": 0.9997010200492438,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.14285714285714285,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.21428571428571427,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 1
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "v2_mondrian",
+      "seed": 3,
+      "attackers": [
+        1,
+        2
+      ],
+      "final": {
+        "accuracy": 0.9997119425240613,
+        "clean_accuracy": 0.9997010200492438,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985936017351227,
+          "clean_accuracy": 0.9985402743580725,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997458316388776,
+          "clean_accuracy": 0.9997361941610974,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997797207536939,
+          "clean_accuracy": 0.9997713682729511,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997627761962857,
+          "clean_accuracy": 0.9997537812170243,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9993391622610818,
+          "clean_accuracy": 0.9993141048188533,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999678053409245,
+          "clean_accuracy": 0.99966584593739,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997119425240613,
+          "clean_accuracy": 0.9997010200492438,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.5,
+      "false_positive_rate": 0.017857142857142856,
+      "flagged_rate_malicious": 0.5,
+      "flagged_rate_honest": 0.17857142857142858,
+      "rescued_honest": 9,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "none",
+      "seed": 4,
+      "attackers": [
+        0,
+        6
+      ],
+      "final": {
+        "accuracy": 0.9998644435407347,
+        "clean_accuracy": 0.9998593035525853,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985597126203064,
+          "clean_accuracy": 0.9985051002462187,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996949979666531,
+          "clean_accuracy": 0.999683432993317,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996949979666531,
+          "clean_accuracy": 0.999683432993317,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9998305544259184,
+          "clean_accuracy": 0.9998241294407316,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9998644435407347,
+          "clean_accuracy": 0.9998593035525853,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9998813880981429,
+          "clean_accuracy": 0.9998768906085121,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9998813880981429,
+          "clean_accuracy": 0.9998768906085121,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9998644435407347,
+          "clean_accuracy": 0.9998593035525853,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.0,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "v1",
+      "seed": 4,
+      "attackers": [
+        0,
+        6
+      ],
+      "final": {
+        "accuracy": 0.8788803036464687,
+        "clean_accuracy": 0.8862820963770665,
+        "backdoor_asr": 0.3163265306122449
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985597126203064,
+          "clean_accuracy": 0.9985051002462187,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996949979666531,
+          "clean_accuracy": 0.999683432993317,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996949979666531,
+          "clean_accuracy": 0.999683432993317,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9998305544259184,
+          "clean_accuracy": 0.9998241294407316,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997966653111021,
+          "clean_accuracy": 0.9997889553288779,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9998813880981429,
+          "clean_accuracy": 0.9998768906085121,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.8788803036464687,
+          "clean_accuracy": 0.8862820963770665,
+          "backdoor_asr": 0.3163265306122449
+        }
+      ],
+      "detection_rate": 0.14285714285714285,
+      "false_positive_rate": 0.017857142857142856,
+      "flagged_rate_malicious": 0.14285714285714285,
+      "flagged_rate_honest": 0.017857142857142856,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "v2",
+      "seed": 4,
+      "attackers": [
+        0,
+        6
+      ],
+      "final": {
+        "accuracy": 0.9996611088518368,
+        "clean_accuracy": 0.9996482588814632,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985597126203064,
+          "clean_accuracy": 0.9985051002462187,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9992374949166328,
+          "clean_accuracy": 0.9992085824832923,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996441642944286,
+          "clean_accuracy": 0.9996306718255364,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996441642944286,
+          "clean_accuracy": 0.9996306718255364,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9998474989833266,
+          "clean_accuracy": 0.9998417164966584,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9998644435407347,
+          "clean_accuracy": 0.9998593035525853,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9998644435407347,
+          "clean_accuracy": 0.9998593035525853,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9937305137589806,
+          "clean_accuracy": 0.9985051002462187,
+          "backdoor_asr": 0.13218923933209648
+        },
+        {
+          "accuracy": 0.9996611088518368,
+          "clean_accuracy": 0.9996482588814632,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.42857142857142855,
+      "false_positive_rate": 0.017857142857142856,
+      "flagged_rate_malicious": 0.42857142857142855,
+      "flagged_rate_honest": 0.017857142857142856,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "label_flip",
+      "policy": "v2_mondrian",
+      "seed": 4,
+      "attackers": [
+        0,
+        6
+      ],
+      "final": {
+        "accuracy": 0.9996441642944286,
+        "clean_accuracy": 0.9996306718255364,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985597126203064,
+          "clean_accuracy": 0.9985051002462187,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9992374949166328,
+          "clean_accuracy": 0.9992085824832923,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996441642944286,
+          "clean_accuracy": 0.9996306718255364,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996441642944286,
+          "clean_accuracy": 0.9996306718255364,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9993222177036736,
+          "clean_accuracy": 0.9992965177629265,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996272197370205,
+          "clean_accuracy": 0.9996130847696095,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996441642944286,
+          "clean_accuracy": 0.9996306718255364,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.5,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.5,
+      "flagged_rate_honest": 0.16071428571428573,
+      "rescued_honest": 9,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "none",
+      "seed": 0,
+      "attackers": [
+        1,
+        5
+      ],
+      "final": {
+        "accuracy": 0.9851735122678595,
+        "clean_accuracy": 0.9993141048188533,
+        "backdoor_asr": 0.3877551020408163
+      },
+      "by_round": [
+        {
+          "accuracy": 0.99852582350549,
+          "clean_accuracy": 0.9984699261343651,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985088789480818,
+          "clean_accuracy": 0.9984523390784382,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999152772129592,
+          "clean_accuracy": 0.9991206472036581,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985427680628982,
+          "clean_accuracy": 0.9984875131902919,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9993222177036736,
+          "clean_accuracy": 0.9992965177629265,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0018552875695732839
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0018552875695732839
+        },
+        {
+          "accuracy": 0.9993052731462654,
+          "clean_accuracy": 0.9994723883221949,
+          "backdoor_asr": 0.00510204081632653
+        },
+        {
+          "accuracy": 0.9851735122678595,
+          "clean_accuracy": 0.9993141048188533,
+          "backdoor_asr": 0.3877551020408163
+        }
+      ],
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.0,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "v1",
+      "seed": 0,
+      "attackers": [
+        1,
+        5
+      ],
+      "final": {
+        "accuracy": 0.9994069404907144,
+        "clean_accuracy": 0.9994548012662681,
+        "backdoor_asr": 0.0018552875695732839
+      },
+      "by_round": [
+        {
+          "accuracy": 0.99852582350549,
+          "clean_accuracy": 0.9984699261343651,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985088789480818,
+          "clean_accuracy": 0.9984523390784382,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9987122136369798,
+          "clean_accuracy": 0.9986633837495603,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9989155483258777,
+          "clean_accuracy": 0.9988744284206824,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0018552875695732839
+        },
+        {
+          "accuracy": 0.9994069404907144,
+          "clean_accuracy": 0.9994548012662681,
+          "backdoor_asr": 0.0018552875695732839
+        }
+      ],
+      "detection_rate": 0.21428571428571427,
+      "false_positive_rate": 0.05357142857142857,
+      "flagged_rate_malicious": 0.21428571428571427,
+      "flagged_rate_honest": 0.05357142857142857,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "v2",
+      "seed": 0,
+      "attackers": [
+        1,
+        5
+      ],
+      "final": {
+        "accuracy": 0.9997119425240613,
+        "clean_accuracy": 0.9997010200492438,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9983055442591839,
+          "clean_accuracy": 0.9982412944073162,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985597126203064,
+          "clean_accuracy": 0.9985051002462187,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996441642944286,
+          "clean_accuracy": 0.9996306718255364,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9992205503592246,
+          "clean_accuracy": 0.9992789307069997,
+          "backdoor_asr": 0.002319109461966605
+        },
+        {
+          "accuracy": 0.9996949979666531,
+          "clean_accuracy": 0.999683432993317,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9849532330215535,
+          "clean_accuracy": 0.9992085824832923,
+          "backdoor_asr": 0.3910018552875696
+        },
+        {
+          "accuracy": 0.9997119425240613,
+          "clean_accuracy": 0.9997010200492438,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.2857142857142857,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.35714285714285715,
+      "flagged_rate_honest": 0.07142857142857142,
+      "rescued_honest": 4,
+      "rescued_malicious": 1
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "v2_mondrian",
+      "seed": 0,
+      "attackers": [
+        1,
+        5
+      ],
+      "final": {
+        "accuracy": 0.9994069404907144,
+        "clean_accuracy": 0.9993844530425606,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9983055442591839,
+          "clean_accuracy": 0.9982412944073162,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985597126203064,
+          "clean_accuracy": 0.9985051002462187,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996441642944286,
+          "clean_accuracy": 0.9996306718255364,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996611088518368,
+          "clean_accuracy": 0.9996482588814632,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996441642944286,
+          "clean_accuracy": 0.9996306718255364,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996272197370205,
+          "clean_accuracy": 0.9996130847696095,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996272197370205,
+          "clean_accuracy": 0.9996130847696095,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9994069404907144,
+          "clean_accuracy": 0.9993844530425606,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.7857142857142857,
+      "false_positive_rate": 0.017857142857142856,
+      "flagged_rate_malicious": 0.7857142857142857,
+      "flagged_rate_honest": 0.08928571428571429,
+      "rescued_honest": 4,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "none",
+      "seed": 1,
+      "attackers": [
+        6,
+        8
+      ],
+      "final": {
+        "accuracy": 0.9993222177036736,
+        "clean_accuracy": 0.9993844530425606,
+        "backdoor_asr": 0.002319109461966605
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9986952690795716,
+          "clean_accuracy": 0.9986457966936335,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9994916632777552,
+          "clean_accuracy": 0.9994723883221949,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9993222177036736,
+          "clean_accuracy": 0.9993844530425606,
+          "backdoor_asr": 0.002319109461966605
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9993222177036736,
+          "clean_accuracy": 0.9993844530425606,
+          "backdoor_asr": 0.002319109461966605
+        }
+      ],
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.0,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "v1",
+      "seed": 1,
+      "attackers": [
+        6,
+        8
+      ],
+      "final": {
+        "accuracy": 0.9995086078351634,
+        "clean_accuracy": 0.9994899753781217,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9986952690795716,
+          "clean_accuracy": 0.9986457966936335,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9994916632777552,
+          "clean_accuracy": 0.9994723883221949,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997288870814695,
+          "clean_accuracy": 0.9997186071051706,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9993899959333062,
+          "clean_accuracy": 0.9994548012662681,
+          "backdoor_asr": 0.002319109461966605
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9994238850481225,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.002319109461966605
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.14285714285714285,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.14285714285714285,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "v2",
+      "seed": 1,
+      "attackers": [
+        6,
+        8
+      ],
+      "final": {
+        "accuracy": 0.9898840992273282,
+        "clean_accuracy": 0.999243756595146,
+        "backdoor_asr": 0.2569573283858998
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985597126203064,
+          "clean_accuracy": 0.9985051002462187,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999373051375898,
+          "clean_accuracy": 0.9994372142103412,
+          "backdoor_asr": 0.002319109461966605
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9900196556865934,
+          "clean_accuracy": 0.9993141048188533,
+          "backdoor_asr": 0.25510204081632654
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9898840992273282,
+          "clean_accuracy": 0.999243756595146,
+          "backdoor_asr": 0.2569573283858998
+        }
+      ],
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.0,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "v2_mondrian",
+      "seed": 1,
+      "attackers": [
+        6,
+        8
+      ],
+      "final": {
+        "accuracy": 0.9997119425240613,
+        "clean_accuracy": 0.9997010200492438,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985597126203064,
+          "clean_accuracy": 0.9985051002462187,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997119425240613,
+          "clean_accuracy": 0.9997010200492438,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997458316388776,
+          "clean_accuracy": 0.9997361941610974,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997458316388776,
+          "clean_accuracy": 0.9997361941610974,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997288870814695,
+          "clean_accuracy": 0.9997186071051706,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9998305544259184,
+          "clean_accuracy": 0.9998241294407316,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997119425240613,
+          "clean_accuracy": 0.9997010200492438,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.8571428571428571,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.9285714285714286,
+      "flagged_rate_honest": 0.017857142857142856,
+      "rescued_honest": 1,
+      "rescued_malicious": 1
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "none",
+      "seed": 2,
+      "attackers": [
+        3,
+        5
+      ],
+      "final": {
+        "accuracy": 0.9993052731462654,
+        "clean_accuracy": 0.9993668659866338,
+        "backdoor_asr": 0.002319109461966605
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999474718720347,
+          "clean_accuracy": 0.9994548012662681,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985088789480818,
+          "clean_accuracy": 0.9984523390784382,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9983733224888166,
+          "clean_accuracy": 0.9983995779106578,
+          "backdoor_asr": 0.002319109461966605
+        },
+        {
+          "accuracy": 0.9987799918666125,
+          "clean_accuracy": 0.9988216672529019,
+          "backdoor_asr": 0.002319109461966605
+        },
+        {
+          "accuracy": 0.999051104785143,
+          "clean_accuracy": 0.9991030601477313,
+          "backdoor_asr": 0.002319109461966605
+        },
+        {
+          "accuracy": 0.999373051375898,
+          "clean_accuracy": 0.9994372142103412,
+          "backdoor_asr": 0.002319109461966605
+        },
+        {
+          "accuracy": 0.9993052731462654,
+          "clean_accuracy": 0.9993668659866338,
+          "backdoor_asr": 0.002319109461966605
+        }
+      ],
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.0,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "v1",
+      "seed": 2,
+      "attackers": [
+        3,
+        5
+      ],
+      "final": {
+        "accuracy": 0.9993052731462654,
+        "clean_accuracy": 0.9993668659866338,
+        "backdoor_asr": 0.002319109461966605
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999474718720347,
+          "clean_accuracy": 0.9994548012662681,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985088789480818,
+          "clean_accuracy": 0.9984523390784382,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9983733224888166,
+          "clean_accuracy": 0.9983995779106578,
+          "backdoor_asr": 0.002319109461966605
+        },
+        {
+          "accuracy": 0.9987799918666125,
+          "clean_accuracy": 0.9988216672529019,
+          "backdoor_asr": 0.002319109461966605
+        },
+        {
+          "accuracy": 0.999051104785143,
+          "clean_accuracy": 0.9991030601477313,
+          "backdoor_asr": 0.002319109461966605
+        },
+        {
+          "accuracy": 0.999373051375898,
+          "clean_accuracy": 0.9994372142103412,
+          "backdoor_asr": 0.002319109461966605
+        },
+        {
+          "accuracy": 0.9993052731462654,
+          "clean_accuracy": 0.9993668659866338,
+          "backdoor_asr": 0.002319109461966605
+        }
+      ],
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.0,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "v2",
+      "seed": 2,
+      "attackers": [
+        3,
+        5
+      ],
+      "final": {
+        "accuracy": 0.9997627761962857,
+        "clean_accuracy": 0.9997537812170243,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9992374949166328,
+          "clean_accuracy": 0.9992085824832923,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9983394333740002,
+          "clean_accuracy": 0.9983644037988041,
+          "backdoor_asr": 0.002319109461966605
+        },
+        {
+          "accuracy": 0.9891046495865528,
+          "clean_accuracy": 0.9983644037988041,
+          "backdoor_asr": 0.25510204081632654
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.002319109461966605
+        },
+        {
+          "accuracy": 0.9900535448014098,
+          "clean_accuracy": 0.999349278930707,
+          "backdoor_asr": 0.25510204081632654
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997627761962857,
+          "clean_accuracy": 0.9997537812170243,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.14285714285714285,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.14285714285714285,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "v2_mondrian",
+      "seed": 2,
+      "attackers": [
+        3,
+        5
+      ],
+      "final": {
+        "accuracy": 0.9997627761962857,
+        "clean_accuracy": 0.9997537812170243,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996272197370205,
+          "clean_accuracy": 0.9996130847696095,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997797207536939,
+          "clean_accuracy": 0.9997713682729511,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997797207536939,
+          "clean_accuracy": 0.9997713682729511,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985088789480818,
+          "clean_accuracy": 0.9984523390784382,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997627761962857,
+          "clean_accuracy": 0.9997537812170243,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997627761962857,
+          "clean_accuracy": 0.9997537812170243,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.7857142857142857,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.7857142857142857,
+      "flagged_rate_honest": 0.017857142857142856,
+      "rescued_honest": 1,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "none",
+      "seed": 3,
+      "attackers": [
+        1,
+        2
+      ],
+      "final": {
+        "accuracy": 0.9995424969499797,
+        "clean_accuracy": 0.9995251494899754,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985936017351227,
+          "clean_accuracy": 0.9985402743580725,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9994577741629389,
+          "clean_accuracy": 0.9994372142103412,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.0,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "v1",
+      "seed": 3,
+      "attackers": [
+        1,
+        2
+      ],
+      "final": {
+        "accuracy": 0.9995594415073878,
+        "clean_accuracy": 0.9995427365459022,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985936017351227,
+          "clean_accuracy": 0.9985402743580725,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9994577741629389,
+          "clean_accuracy": 0.9994372142103412,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.017857142857142856,
+      "flagged_rate_malicious": 0.0,
+      "flagged_rate_honest": 0.017857142857142856,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "v2",
+      "seed": 3,
+      "attackers": [
+        1,
+        2
+      ],
+      "final": {
+        "accuracy": 0.9996949979666531,
+        "clean_accuracy": 0.999683432993317,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985936017351227,
+          "clean_accuracy": 0.9985402743580725,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996611088518368,
+          "clean_accuracy": 0.9996482588814632,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999678053409245,
+          "clean_accuracy": 0.99966584593739,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996949979666531,
+          "clean_accuracy": 0.999683432993317,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996949979666531,
+          "clean_accuracy": 0.999683432993317,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996949979666531,
+          "clean_accuracy": 0.999683432993317,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.0,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "v2_mondrian",
+      "seed": 3,
+      "attackers": [
+        1,
+        2
+      ],
+      "final": {
+        "accuracy": 0.9996272197370205,
+        "clean_accuracy": 0.9996130847696095,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985936017351227,
+          "clean_accuracy": 0.9985402743580725,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995594415073878,
+          "clean_accuracy": 0.9995427365459022,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996272197370205,
+          "clean_accuracy": 0.9996130847696095,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.42857142857142855,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.42857142857142855,
+      "flagged_rate_honest": 0.16071428571428573,
+      "rescued_honest": 9,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "none",
+      "seed": 4,
+      "attackers": [
+        0,
+        6
+      ],
+      "final": {
+        "accuracy": 0.9996611088518368,
+        "clean_accuracy": 0.9996482588814632,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985597126203064,
+          "clean_accuracy": 0.9985051002462187,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996611088518368,
+          "clean_accuracy": 0.9996482588814632,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996611088518368,
+          "clean_accuracy": 0.9996482588814632,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.0,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "v1",
+      "seed": 4,
+      "attackers": [
+        0,
+        6
+      ],
+      "final": {
+        "accuracy": 0.9997288870814695,
+        "clean_accuracy": 0.9997186071051706,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985597126203064,
+          "clean_accuracy": 0.9985051002462187,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9985766571777145,
+          "clean_accuracy": 0.9985226873021457,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.999576386064796,
+          "clean_accuracy": 0.999560323601829,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996102751796123,
+          "clean_accuracy": 0.9995954977136827,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995086078351634,
+          "clean_accuracy": 0.9994899753781217,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995424969499797,
+          "clean_accuracy": 0.9995251494899754,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996611088518368,
+          "clean_accuracy": 0.9996482588814632,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9997288870814695,
+          "clean_accuracy": 0.9997186071051706,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.14285714285714285,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.14285714285714285,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 0
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "v2",
+      "seed": 4,
+      "attackers": [
+        0,
+        6
+      ],
+      "final": {
+        "accuracy": 0.9996611088518368,
+        "clean_accuracy": 0.9996482588814632,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985597126203064,
+          "clean_accuracy": 0.9985051002462187,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9992374949166328,
+          "clean_accuracy": 0.9992085824832923,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996441642944286,
+          "clean_accuracy": 0.9996306718255364,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996441642944286,
+          "clean_accuracy": 0.9996306718255364,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996611088518368,
+          "clean_accuracy": 0.9996482588814632,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996611088518368,
+          "clean_accuracy": 0.9996482588814632,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996611088518368,
+          "clean_accuracy": 0.9996482588814632,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.07142857142857142,
+      "flagged_rate_honest": 0.0,
+      "rescued_honest": 0,
+      "rescued_malicious": 1
+    },
+    {
+      "dataset": "flnet",
+      "attack": "backdoor",
+      "policy": "v2_mondrian",
+      "seed": 4,
+      "attackers": [
+        0,
+        6
+      ],
+      "final": {
+        "accuracy": 0.9996611088518368,
+        "clean_accuracy": 0.9996482588814632,
+        "backdoor_asr": 0.0
+      },
+      "by_round": [
+        {
+          "accuracy": 0.9985597126203064,
+          "clean_accuracy": 0.9985051002462187,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9992374949166328,
+          "clean_accuracy": 0.9992085824832923,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995933306222041,
+          "clean_accuracy": 0.9995779106577559,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996441642944286,
+          "clean_accuracy": 0.9996306718255364,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9995255523925715,
+          "clean_accuracy": 0.9995075624340486,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996441642944286,
+          "clean_accuracy": 0.9996306718255364,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996611088518368,
+          "clean_accuracy": 0.9996482588814632,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996611088518368,
+          "clean_accuracy": 0.9996482588814632,
+          "backdoor_asr": 0.0
+        },
+        {
+          "accuracy": 0.9996611088518368,
+          "clean_accuracy": 0.9996482588814632,
+          "backdoor_asr": 0.0
+        }
+      ],
+      "detection_rate": 0.0,
+      "false_positive_rate": 0.0,
+      "flagged_rate_malicious": 0.5,
+      "flagged_rate_honest": 0.14285714285714285,
+      "rescued_honest": 8,
+      "rescued_malicious": 7
+    }
+  ]
+}

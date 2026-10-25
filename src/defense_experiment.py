@@ -54,10 +54,15 @@ from protocol import (AnomalyScorer, Fingerprinter, GlobalCalibrator,
                       pack, second_check, unflatten, unpack)
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-RESULTS_PATH = os.path.join(PROJECT_ROOT, "results", "defense_experiment.json")
+# KRYPSIS_SPLIT=701515 runs FLNET2023 on the 70/15/15 split (src/split_701515.py)
+# and saves to results/split_701515/; unset = the original split and results.
+SPLIT = os.environ.get("KRYPSIS_SPLIT", "")
+RESULTS_PATH = os.path.join(PROJECT_ROOT, "results", f"split_{SPLIT}" if SPLIT else "",
+                            "defense_experiment.json")
 
 DATASETS = {
-    "flnet": {"dir": os.path.join(PROJECT_ROOT, "data", "processed"),
+    "flnet": {"dir": os.path.join(PROJECT_ROOT, "data",
+                                  f"processed_{SPLIT}" if SPLIT else "processed"),
               "assignment": "client_assignment_router.npy",
               "backdoor_target": "DoS-slowhttp"},
     "nslkdd": {"dir": os.path.join(PROJECT_ROOT, "data", "processed_nslkdd"),
@@ -300,7 +305,7 @@ def save(runs: list):
 
 
 def main():
-    datasets = sys.argv[1:] or list(DATASETS)
+    datasets = sys.argv[1:] or (["flnet"] if SPLIT else list(DATASETS))
     runs = []
     if os.path.exists(RESULTS_PATH):
         with open(RESULTS_PATH) as f:

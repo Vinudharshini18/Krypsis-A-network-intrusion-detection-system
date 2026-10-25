@@ -72,18 +72,47 @@ def load(name):
         return json.load(f)
 
 
-CENTRAL = load("centralized_baseline.json")
-FED_IID = load("federated_iid.json")[-1]
-FED_ROUTER = load("federated_router.json")[-1]
-MC = load("multiclass.json")
-DEF = load("defense_experiment.json")["summary"]
-PROT = load("protocol_experiment.json")
+# FLNET2023 results come from the 70 / 15 / 15 split (src/split_701515.py,
+# results/split_701515/). NSL-KDD keeps its official split (results/).
+CEN = load("split_701515/centralized.json")
+FR = load("split_701515/federated_router.json")
+FI = load("split_701515/federated_iid.json")
+CENTRAL, FED_ROUTER, FED_IID = CEN["test"], FR["test"], FI["test"]
+PROT = load("split_701515/protocol_experiment.json")
 PG = PROT["summary"]
 COMM = PROT["communication"]
-FL, NL, NB = DEF["flnet/label_flip"], DEF["nslkdd/label_flip"], DEF["nslkdd/backdoor"]
+FL = load("split_701515/defense_experiment.json")["summary"]["flnet/label_flip"]
+NL = load("defense_experiment.json")["summary"]["nslkdd/label_flip"]
+with open(os.path.join(os.path.dirname(HERE), "data", "processed_701515",
+                       "split_report.json")) as _f:
+    SPLIT = json.load(_f)
+N_TRAIN, N_VAL, N_TEST = (SPLIT["sets"][s]["flows"] for s in ("train", "val", "test"))
 
-# FLNET2023 training data: attack % per router (src/preprocess.py output).
-ROUTER_ATTACK = [55.7, 83.2, 19.0, 92.1, 76.3, 66.1, 42.2, 50.8, 72.3, 68.5]
+
+def _attack_round_stats():
+    """Mean accuracy over the attack rounds (6-12) per policy, and paired
+    t-test p-values. More stable than the last round alone, because
+    accuracy swings from round to round while attackers are active."""
+    from scipy import stats
+    runs = PROT["runs"]
+    avg = {pol: [sum(r["accuracy_by_round"][5:]) / len(r["accuracy_by_round"][5:])
+                 for r in sorted((r for r in runs if r["policy"] == pol), key=lambda r: r["seed"])]
+           for pol in ("none", "global", "mondrian")}
+    return ({k: sum(v) / len(v) for k, v in avg.items()},
+            {"mondrian_vs_none": stats.ttest_rel(avg["mondrian"], avg["none"]).pvalue,
+             "mondrian_vs_global": stats.ttest_rel(avg["mondrian"], avg["global"]).pvalue})
+
+
+ATTACK_AVG, ATTACK_P = _attack_round_stats()
+
+
+def pval(x):
+    return "p < 0.001" if x < 0.001 else f"p = {x:.3f}"
+
+
+# FLNET2023 training data (70% part): attack % per router.
+ROUTER_ATTACK = [round(100 * SPLIT["sets"]["train"]["per_router_attack_share"][str(k)], 1)
+                 for k in range(1, 11)]
 
 
 def p(x, d=1):
@@ -537,12 +566,13 @@ def vec(slide, x, y, length, angle_deg, color=SOFT, weight=1.75):
          weight=weight, head=True)
 
 
-IID_ATTACK = [66.0, 66.3, 65.7, 65.6, 65.8, 65.8, 66.3, 65.6, 66.1, 66.1]
+# 70% training part of the 70 / 15 / 15 split (src/split_701515.py output).
+IID_ATTACK = [89.7, 89.9, 89.8, 89.8, 89.4, 90.0, 89.5, 90.2, 89.8, 89.7]
 DIRICHLET_ATTACK = [28.0, 100.0, 99.2, 18.4, 40.2, 97.6, 40.2, 11.9, 84.1, 54.3]
-TRAFFIC_TYPES = [("Normal", 192253), ("DoS-hulk", 164438), ("DDoS-tcp", 93080),
-                 ("DDoS-stomp", 38954), ("DDoS-dyn", 32292), ("Infiltration-MITM", 16000),
-                 ("DoS-slowhttp", 14369), ("DDoS-bot", 8781), ("Web-XSS", 3069),
-                 ("Web-SQL-injection", 441), ("Web-cmd-injection", 330)]
+TRAFFIC_TYPES = [("DoS-hulk", 114900), ("DDoS-tcp", 64998), ("Normal", 28177),
+                 ("DDoS-stomp", 27268), ("DDoS-dyn", 21077), ("DoS-slowhttp", 10057),
+                 ("DDoS-bot", 6137), ("Web-XSS", 2147), ("Web-SQL-injection", 309),
+                 ("Web-cmd-injection", 231), ("Infiltration-MITM", 80)]
 
 
 def mtag(step):
@@ -554,12 +584,12 @@ def mtag(step):
 def s04_data(prs):
     slide = base(prs, mtag(1), "Data and preprocessing",
                  "FLNET2023 records network flows at 10 routers. Five steps turn the raw "
-                 "captures into clean model input.")
-    stages = [("Raw captures", "one CSV set per router · 4.8 M flows"),
-              ("Sample 10%", "at least 2,000 rows per file"),
+                 "captures into a clean 70 / 15 / 15 split.")
+    stages = [("Sample 10%", "of 4.8 M flows, ≥ 2,000 per file"),
               ("Drop identifiers", "src/dst IP, source port, timestamp"),
-              ("Clean", "inf / NaN rows · 12 constant columns"),
-              ("Scale", "signed log, then min-max to 0–1"),
+              ("Remove duplicates", f"{SPLIT['duplicates_removed']:,} exact copies"),
+              ("Split 70 / 15 / 15", "train · validation · test, inside each router"),
+              ("Scale", "signed log + min-max, fit on train only"),
               ("Model input", "66 features · label 0 / 1")]
     bw, gap = Inches(1.86), Inches(0.215)
     for i, (t, b) in enumerate(stages):
@@ -578,15 +608,15 @@ def s04_data(prs):
         ("Why drop identifiers?", "Attackers in the capture use fixed addresses. With IPs "
                                   "and time left in, the model would memorise who attacks, "
                                   "not what an attack looks like."),
-        ("Why log scaling?", "Byte and packet counts range from 1 to about a billion; "
-                             "the log stops a few huge flows from squashing the rest."),
-        ("No test leakage", "The scaler is fitted on training data only. Result: 564,007 "
-                            "training and 79,491 test flows."),
+        ("Why remove duplicates?", "30% of flows were exact copies. A copy in both train "
+                                   "and test would let the model pass by memory."),
+        ("Why 70 / 15 / 15?", f"Train {N_TRAIN:,} · validation {N_VAL:,} (early stopping, "
+                              f"threshold) · test {N_TEST:,}, used once at the end."),
     ], heading="Why each step")
 
     x0, w0 = Inches(6.85), Inches(5.93)
     rect(slide, x0, Inches(3.3), w0, Inches(3.55), fill=PANEL, radius=0.04)
-    label_caps(slide, x0 + Inches(0.25), Inches(3.42), Inches(5), "Training flows by type")
+    label_caps(slide, x0 + Inches(0.25), Inches(3.42), Inches(5), "Training flows (70%) by type")
     top = max(n for _, n in TRAFFIC_TYPES)
     bar_x, bar_w = x0 + Inches(1.85), Inches(2.9)
     for i, (name, n) in enumerate(TRAFFIC_TYPES):
@@ -601,14 +631,17 @@ def s04_data(prs):
     notes(slide, """
         Step one is the data. FLNET2023 was recorded at 10 routers of an emulated network and
         has normal traffic plus 10 attack types: the chart on the right shows how many training
-        flows of each type we have. Most are normal, DoS-hulk and DDoS-tcp; web attacks are
-        rare.
+        flows of each type we have. Most are DoS-hulk and DDoS-tcp; web attacks are rare.
         The top row is our preprocessing. We sample 10 percent of each file, because the full
         4.8 million flows is too big to train many times. We drop IP addresses, the port and the
         timestamp, so the model learns what an attack looks like instead of memorising the
-        attacker's address. We remove broken rows and 12 columns that never change. Then a log
-        and a 0 to 1 scaling, fitted only on the training data. The result is 66 features per
-        flow and a label: 0 for normal, 1 for attack.
+        attacker's address. Then we remove exact duplicate flows: 30 percent of the flows were
+        copies, mostly normal traffic, and a copy in both training and test would let the model
+        pass the test by memory. Next we split each router's flows 70 percent training, 15
+        percent validation and 15 percent test, keeping each router's traffic mix. Validation
+        is used for early stopping and tuning; the test set is used only once, at the end.
+        Last, a log and a 0 to 1 scaling, fitted only on the training part. The result is 66
+        features per flow and a label: 0 for normal, 1 for attack.
     """)
 
 
@@ -618,11 +651,11 @@ def s05_clients(prs):
                  "different, as in real networks.")
     cols = [
         ("IID split", "control", IID_ATTACK, MUTED,
-         "All flows shuffled and dealt out evenly. Every client is about 66% attack, so "
+         "All flows shuffled and dealt out evenly. Every client is about 90% attack, so "
          "everyone looks alike."),
         ("Router split", "FLNET2023 · main", ROUTER_ATTACK, ACCENT,
-         "Each real router is one client. Router 3 sees 19% attacks, router 4 sees 92%: "
-         "naturally uneven."),
+         f"Each real router is one client. Router 3 sees {ROUTER_ATTACK[2]:.0f}% attacks, "
+         f"router 4 sees {ROUTER_ATTACK[3]:.0f}%: naturally uneven."),
         ("Dirichlet split", "NSL-KDD · alpha = 0.5", DIRICHLET_ATTACK, AMBER,
          "Each attack type is shared out with random Dirichlet proportions. Smaller alpha "
          "= more uneven clients."),
@@ -647,13 +680,14 @@ def s05_clients(prs):
          ("An honest client with unusual data can look like an attacker to an outlier "
           "check. That is exactly our research question.", {})]], size=12.5,
          anchor=MSO_ANCHOR.MIDDLE)
-    notes(slide, """
+    notes(slide, f"""
         Step two decides which data each client holds. The three charts show the share of
-        attack traffic at each of the 10 clients.
+        attack traffic at each of the 10 clients, in the 70 percent training part.
         Left, the IID split: we shuffle all flows and deal them out evenly, so every client is
-        about 66 percent attack. This is only a control.
+        about 90 percent attack. This is only a control.
         Middle, our main setup: FLNET2023's real routers, one router per client. It is uneven by
-        nature: router 3 has 19 percent attacks, router 4 has 92.
+        nature: router 3 has {ROUTER_ATTACK[2]:.0f} percent attacks, router 4 has
+        {ROUTER_ATTACK[3]:.0f}.
         Right, NSL-KDD with a Dirichlet split. For each attack type, a Dirichlet distribution
         with alpha 0.5 gives every client a random share, so some clients are almost all attack
         and others almost all normal.
@@ -752,23 +786,23 @@ def s07_fedavg(prs):
          color=SOFT)
     points(slide, x0, Inches(3.45), w0, [
         ("Why weighted?", "A router with more traffic has seen more examples, so its model "
-                          "counts more. Router 10 holds 25% of all flows."),
+                          "counts more. Router 10 holds 26% of all flows."),
         ("Setup", "10 clients · 15 rounds · 2 local epochs · batch size 256."),
-        ("Privacy", "Only the 58,369 weights travel; the 564,007 flows stay on their "
-                    "routers."),
-        ("Result", f"{p(FED_ROUTER['accuracy'], 2)} over the real routers vs "
-                   f"{p(CENTRAL['accuracy'])} centralized."),
+        ("Privacy", f"Only the 58,369 weights travel; the {N_TRAIN:,} training flows stay "
+                    "on their routers."),
+        ("Result", f"Test accuracy {p(FED_ROUTER['accuracy'], 2)} over the real routers vs "
+                   f"{p(CENTRAL['accuracy'], 2)} centralized."),
         ("Where Krypsis fits", "Steps 5–8 run between 3 (send back) and 4 (average)."),
     ], size=12)
-    notes(slide, """
+    notes(slide, f"""
         Step four is federated training, a loop that repeats every round. One: the server
         sends the current global model to all 10 routers. Two: each router trains it for two
         epochs on its own traffic. Three: each router sends back only its new weights and how
         many flows it trained on. Four: the server averages them with the FedAvg rule on the
         right: each router's model is weighted by its share of the data, so a router with more
         traffic counts more.
-        After 15 rounds the federated model reaches 99.93 percent, almost the same as training
-        on all data in one place. In the protected version, steps five to eight happen between
+        After 15 rounds the federated model reaches {p(FED_ROUTER['accuracy'], 2)} on the test
+        set, almost the same as training on all data in one place. In the protected version, steps five to eight happen between
         "send weights back" and "average".
     """)
 
@@ -1093,16 +1127,17 @@ def s11_threshold(prs):
 def s12_results(prs):
     slide = base(prs, "Results", "What the experiments show",
                  "Attack: 2 of 10 clients flip labels (attack ↔ normal) from round 6 of 12. "
-                 "Means over 5 (FLNET2023) and 10 (NSL-KDD) seeds.")
+                 "Krypsis v2 = filter + second check + 15% cap. 5 (FLNET2023) / 10 (NSL-KDD) seeds.")
     tiles = [
-        (p(FED_ROUTER["accuracy"], 2), "FedAvg accuracy, 10 routers",
-         f"centralized {p(CENTRAL['accuracy'])}"),
+        (p(FED_ROUTER["accuracy"], 2), "FedAvg test accuracy, 10 routers",
+         f"train {p(FR['train']['accuracy'], 2)} · validation {p(FR['val']['accuracy'], 2)}"),
         (f"{PG['global']['tamper_rejected']} / {PG['global']['tamper_sent']}",
          "tampered messages rejected", "integrity tag"),
-        (f"{p(FL['v2']['detection_rate_mean'])} · {p(NL['v2']['detection_rate_mean'])}",
-         "poisoned updates caught", "FLNET2023 · NSL-KDD"),
-        (f"{p(FL['v2']['false_positive_rate_mean'])} · {p(NL['v2']['false_positive_rate_mean'])}",
-         "honest updates wrongly flagged", "FLNET2023 · NSL-KDD"),
+        (f"{p(FL['v2_mondrian']['detection_rate_mean'])} · {p(NL['v2_mondrian']['detection_rate_mean'])}",
+         "poisoned updates caught", "v2 Mondrian · FLNET2023 · NSL-KDD"),
+        (f"{p(FL['v2_mondrian']['false_positive_rate_mean'])} · "
+         f"{p(NL['v2_mondrian']['false_positive_rate_mean'])}",
+         "honest updates wrongly excluded", "v2 Mondrian · FLNET2023 · NSL-KDD"),
     ]
     tw = Inches(2.95)
     for i, (num, lab, sub) in enumerate(tiles):
@@ -1113,28 +1148,35 @@ def s12_results(prs):
               [(lab, {"size": 12})], [(sub, {"size": 10, "color": MUTED})]], spacing=1.1)
     bar_chart(slide, LEFT, Inches(3.3), Inches(6.0), Inches(3.6), ["FLNET2023", "NSL-KDD"],
               [("No protocol", [100 * FL["none"]["accuracy_mean"], 100 * NL["none"]["accuracy_mean"]]),
-               ("With Krypsis", [100 * FL["v2"]["accuracy_mean"], 100 * NL["v2"]["accuracy_mean"]])],
-              [MUTED, ACCENT], title="Accuracy under label-flipping attack", vmax=110, unit=20)
-    bar_chart(slide, Inches(6.75), Inches(3.3), Inches(6.03), Inches(3.6),
-              ["Centralized", "FedAvg IID", "FedAvg routers"],
-              [("Macro-F1", [100 * MC["centralized"]["macro_f1"], 100 * MC["federated_iid"]["macro_f1"],
-                             100 * MC["federated_router"]["macro_f1"]])],
-              [AMBER], title="Naming the attack type (11 classes): macro-F1", fmt='0"%"',
+               ("Krypsis v2 global", [100 * FL["v2"]["accuracy_mean"], 100 * NL["v2"]["accuracy_mean"]]),
+               ("Krypsis v2 Mondrian", [100 * FL["v2_mondrian"]["accuracy_mean"],
+                                        100 * NL["v2_mondrian"]["accuracy_mean"]])],
+              [MUTED, AMBER, ACCENT], title="Accuracy under label-flipping attack",
               vmax=110, unit=20)
+    bar_chart(slide, Inches(6.75), Inches(3.3), Inches(6.03), Inches(3.6),
+              ["Centralized", "FedAvg, 10 routers"],
+              [(name, [100 * CEN[s]["accuracy"], 100 * FR[s]["accuracy"]])
+               for name, s in (("Train 70%", "train"), ("Validation 15%", "val"),
+                               ("Test 15%", "test"))],
+              [MUTED, AMBER, ACCENT], title="No overfitting: train vs validation vs test",
+              fmt='0.00"%"', vmax=110, unit=20)
     notes(slide, f"""
         The results. Top left: federated training over the 10 routers reaches
-        {p(FED_ROUTER['accuracy'], 2)}, almost the same as the centralized
-        {p(CENTRAL['accuracy'])}. Every one of the 105 tampered messages was rejected. Under
-        the label-flipping attack the protocol caught {p(FL['v2']['detection_rate_mean'])} of
-        poisoned updates on FLNET2023 and {p(NL['v2']['detection_rate_mean'])} on NSL-KDD,
-        while wrongly flagging under 1.2 percent of honest ones.
-        Bottom left: accuracy at the end of an attacked run, without and with Krypsis:
-        FLNET2023 {p(FL['none']['accuracy_mean'])} to {p(FL['v2']['accuracy_mean'])}, NSL-KDD
-        {p(NL['none']['accuracy_mean'])} to {p(NL['v2']['accuracy_mean'])}; the NSL-KDD gain is
-        statistically significant, p = 0.009.
-        Bottom right: the binary task is easy, so we also named the 11 traffic types. There,
-        real uneven routers drop macro-F1 from 0.76 to 0.39: attack types that only one
-        router sees get averaged away. That is the cost of non-IID data.
+        {p(FED_ROUTER['accuracy'], 2)} on the test set, with the same accuracy on training and
+        validation data. Every one of the 105 tampered messages was rejected. Under the
+        label-flipping attack, Krypsis v2 with Mondrian thresholds caught
+        {p(FL['v2_mondrian']['detection_rate_mean'])} of poisoned updates on FLNET2023 and
+        {p(NL['v2_mondrian']['detection_rate_mean'])} on NSL-KDD, while wrongly excluding under
+        2 percent of honest ones.
+        Bottom left: accuracy at the end of an attacked run. On FLNET2023 no protocol gives
+        {p(FL['none']['accuracy_mean'])}, the global threshold
+        {p(FL['v2']['accuracy_mean'])}, and Mondrian {p(FL['v2_mondrian']['accuracy_mean'])},
+        a significant gain, p = 0.045. On NSL-KDD both versions lift accuracy from
+        {p(NL['none']['accuracy_mean'])} to about {p(NL['v2']['accuracy_mean'])}.
+        Bottom right: the overfitting check. With the 70, 15, 15 split
+        and duplicates removed, training, validation and test accuracy are the same, for the
+        centralized model and for FedAvg. The model is not memorising; this dataset is simply
+        easy to separate.
     """)
 
 
@@ -1143,16 +1185,18 @@ def s13_comparison(prs):
                  "FLNET2023, 2 of 10 attackers, 15 seeds, paired t-tests.")
     n, g, m = PG["none"], PG["global"], PG["mondrian"]
     pt = PG["paired_t_test_global_vs_mondrian"]
-    cols = [("No protocol", False), ("Protocol + global", True), ("Protocol + Mondrian", False)]
-    rows = [("Accuracy under attack", [p(n["final_accuracy_mean"]), p(g["final_accuracy_mean"]),
-                                       p(m["final_accuracy_mean"])]),
+    cols = [("No protocol", False), ("Protocol + global", False), ("Protocol + Mondrian", True)]
+    rows = [("Accuracy, rounds 6–12 (mean)", [p(ATTACK_AVG["none"]), p(ATTACK_AVG["global"]),
+                                              p(ATTACK_AVG["mondrian"])]),
+            ("Accuracy, last round", [p(n["final_accuracy_mean"]), p(g["final_accuracy_mean"]),
+                                      p(m["final_accuracy_mean"])]),
             ("Attacks caught", ["—", p(g["detection_rate_mean"]), p(m["detection_rate_mean"])]),
             ("Honest wrongly flagged", ["—", p(g["false_positive_rate_mean"]),
                                         p(m["false_positive_rate_mean"])]),
             ("Tampered rejected", ["not checked", f"{g['tamper_rejected']} / {g['tamper_sent']}",
                                    f"{m['tamper_rejected']} / {m['tamper_sent']}"])]
-    x0, y0 = LEFT, Inches(1.85)
-    lw, cw, rh = Inches(3.4), Inches(2.6), Inches(0.72)
+    x0, y0 = LEFT, Inches(1.8)
+    lw, cw, rh = Inches(3.4), Inches(2.6), Inches(0.6)
     for j, (name, best) in enumerate(cols):
         x = x0 + lw + j * (cw + Inches(0.1))
         rect(slide, x, y0, cw, rh * (len(rows) + 1) + Inches(0.1),
@@ -1174,21 +1218,29 @@ def s13_comparison(prs):
     rect(slide, LEFT, Inches(5.75), CONTENT_W, Inches(1.0), fill=PANEL, radius=0.08)
     rect(slide, LEFT, Inches(5.75), Inches(0.06), Inches(1.0), fill=AMBER)
     text(slide, LEFT + Inches(0.3), Inches(5.75), CONTENT_W - Inches(0.5), Inches(1.0), [
-        [("Answer: no.  ", {"bold": True, "color": AMBER, "font": HEAD, "size": 15}),
-         ("Mondrian caught a little more but flagged more honest clients; neither difference "
-          f"is significant (p = {pt['detection_rate']['p_value']:.2f} and "
-          f"{pt['false_positive_rate']['p_value']:.2f}). One global threshold is enough.",
-          {"size": 13.5})]], anchor=MSO_ANCHOR.MIDDLE, spacing=1.2)
+        [("Answer: yes.  ", {"bold": True, "color": ACCENT, "font": HEAD, "size": 15}),
+         (f"Mondrian caught far more attacks ({pval(pt['detection_rate']['p_value'])}) and kept "
+          f"accuracy higher during the attack ({pval(ATTACK_P['mondrian_vs_global'])}). Its "
+          f"cost, more honest updates flagged, is fixed by the second check: "
+          f"{p(FL['v2_mondrian']['false_positive_rate_mean'])} in v2.", {"size": 13.5})]],
+         anchor=MSO_ANCHOR.MIDDLE, spacing=1.2)
     notes(slide, f"""
         This answers our research question, using the dedicated 15-seed experiment on
-        FLNET2023. Without the protocol, accuracy under attack ends at
-        {p(n['final_accuracy_mean'])}. With the protocol and a global threshold it is
-        {p(g['final_accuracy_mean'])}; with Mondrian {p(m['final_accuracy_mean'])}. Mondrian
-        caught slightly more attacks, {p(m['detection_rate_mean'])} against
-        {p(g['detection_rate_mean'])}, but also wrongly flagged more honest clients,
-        {p(m['false_positive_rate_mean'])} against {p(g['false_positive_rate_mean'])}. Paired
-        t-tests over the 15 seeds show neither difference is significant. So the simpler
-        global threshold is the best choice, and both rejected every tampered message.
+        FLNET2023. Because accuracy swings from round to round while attackers are active, the
+        first row is the mean over the attack rounds 6 to 12: {p(ATTACK_AVG['none'])} with no
+        protocol, {p(ATTACK_AVG['global'])} with a global threshold and
+        {p(ATTACK_AVG['mondrian'])} with Mondrian; Mondrian is significantly better than both
+        ({pval(ATTACK_P['mondrian_vs_none'])} and {pval(ATTACK_P['mondrian_vs_global'])}).
+        Mondrian caught {p(m['detection_rate_mean'])} of attacks against
+        {p(g['detection_rate_mean'])} for the global threshold. Its cost is more honest
+        updates flagged, {p(m['false_positive_rate_mean'])} against
+        {p(g['false_positive_rate_mean'])}, because this experiment simply drops flagged
+        updates. In Krypsis v2 the second check rescues most of them: only
+        {p(FL['v2_mondrian']['false_positive_rate_mean'])} of honest updates are lost.
+        Why does Mondrian win? After removing duplicates the routers are very different: router
+        3 is under half attack traffic, most others about 90 percent. One global line must be
+        loose enough for router 3, so it misses attackers; per-cluster lines can be strict
+        where it is safe. Both versions rejected every tampered message.
     """)
 
 
@@ -1199,11 +1251,12 @@ def s14_conclusion(prs):
                   "update protocol."),
         ("Protocol", "HMAC tag + verifiable fingerprint: all tampering rejected, poisoned "
                      "updates filtered, +0.67% size."),
-        ("Accuracy", "Federated nearly matches centralized; under attack Krypsis keeps "
-                     "accuracy higher."),
-        ("Finding", "One global threshold is enough; Mondrian gave no significant gain."),
-        ("Next", "Protocol on the 11-class task, a trust-based weight cap, a real network "
-                 "testbed."),
+        ("Accuracy", "Federated matches centralized; train, validation and test accuracy are "
+                     "equal on a fair 70 / 15 / 15 split, so no overfitting."),
+        ("Finding", "Per-cluster (Mondrian) thresholds beat one global threshold on uneven "
+                    "routers; the second check removes their extra false alarms."),
+        ("Next", "More FLNET2023 seeds, the 11-class task, a secret sketch seed, a real "
+                 "network testbed."),
     ]
     for i, (k, v) in enumerate(items):
         y = Inches(1.6) + i * Inches(0.82)
@@ -1241,11 +1294,13 @@ def s14_conclusion(prs):
         To conclude. We built a federated intrusion detector over 10 real router clients
         and our own protocol for the model updates. The protocol rejected every tampered
         message and filtered poisoned updates for less than 1 percent extra message size.
-        Federated training almost matches centralized training, and under attack Krypsis
-        keeps accuracy higher. Our research finding: one global threshold is enough; the
-        per-cluster Mondrian threshold gave no significant gain. Next we would run the
-        protocol on the 11-class task, use a trust-based weight cap, and test on a real
-        network. The key references are on the right, and all the code and results are on
+        Federated training matches centralized training, and on a fair 70, 15, 15 split with
+        duplicates removed, training, validation and test accuracy are equal, so the model is
+        not overfitting. Our research finding: when routers see very different traffic,
+        per-cluster Mondrian thresholds catch far more poisoned updates than one global
+        threshold, and the second check removes the extra false alarms. Next we would run more
+        seeds on FLNET2023, the 11-class task, use a secret seed for the sketch, and test on a
+        real network. The key references are on the right, and all the code and results are on
         GitHub. Thank you, we are happy to take questions.
     """)
 
