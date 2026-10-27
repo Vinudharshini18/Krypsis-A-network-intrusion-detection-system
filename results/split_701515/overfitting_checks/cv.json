@@ -1,0 +1,107 @@
+{
+  "folds": [
+    {
+      "fold": 1,
+      "epochs": 39,
+      "threshold": 0.1,
+      "train": {
+        "accuracy": 0.9999717567977857,
+        "balanced_accuracy": 0.9999842687526301,
+        "f1": 0.999984268505154,
+        "errors": 8,
+        "flows": 283254
+      },
+      "test": {
+        "accuracy": 1.0,
+        "balanced_accuracy": 1.0,
+        "f1": 1.0,
+        "errors": 0,
+        "flows": 78682
+      },
+      "minutes": 4.9
+    },
+    {
+      "fold": 2,
+      "epochs": 34,
+      "threshold": 0.1,
+      "train": {
+        "accuracy": 0.9999894087991696,
+        "balanced_accuracy": 0.9999941008054367,
+        "f1": 0.999994100770636,
+        "errors": 3,
+        "flows": 283254
+      },
+      "test": {
+        "accuracy": 0.9999618718385399,
+        "balanced_accuracy": 0.9999787628661636,
+        "f1": 0.9999787624151382,
+        "errors": 3,
+        "flows": 78682
+      },
+      "minutes": 4.4
+    },
+    {
+      "fold": 3,
+      "epochs": 80,
+      "threshold": 0.1,
+      "train": {
+        "accuracy": 0.9999929391994464,
+        "balanced_accuracy": 0.9999960672036244,
+        "f1": 0.9999960671881575,
+        "errors": 2,
+        "flows": 283254
+      },
+      "test": {
+        "accuracy": 0.9999872906128466,
+        "balanced_accuracy": 0.9999929209553879,
+        "f1": 0.9999929209052746,
+        "errors": 1,
+        "flows": 78682
+      },
+      "minutes": 10.3
+    },
+    {
+      "fold": 4,
+      "epochs": 34,
+      "threshold": 0.1,
+      "train": {
+        "accuracy": 0.9999929391994464,
+        "balanced_accuracy": 0.9999960672036244,
+        "f1": 0.9999960671881575,
+        "errors": 2,
+        "flows": 283254
+      },
+      "test": {
+        "accuracy": 1.0,
+        "balanced_accuracy": 1.0,
+        "f1": 1.0,
+        "errors": 0,
+        "flows": 78682
+      },
+      "minutes": 2.9
+    },
+    {
+      "fold": 5,
+      "epochs": 31,
+      "threshold": 0.1,
+      "train": {
+        "accuracy": 0.9999964696121869,
+        "balanced_accuracy": 0.9999980336018122,
+        "f1": 0.9999980335979455,
+        "errors": 1,
+        "flows": 283255
+      },
+      "test": {
+        "accuracy": 0.9999872904513161,
+        "balanced_accuracy": 0.9999929209553879,
+        "f1": 0.9999929209052746,
+        "errors": 1,
+        "flows": 78681
+      },
+      "minutes": 413.1
+    }
+  ],
+  "train_accuracy_mean": 0.999988702721607,
+  "test_accuracy_mean": 0.9999872905805406,
+  "test_accuracy_std": 1.3922436072078209e-05
+}

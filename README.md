@@ -380,6 +380,11 @@ Krypsis-A-network-intrusion-detection-system/
 │   ├── robustness_experiment.py   # Phase 11 — dropout, shift, scalability
 │   ├── split_701515.py            # Phase 12 — 70/15/15 split, duplicates removed
 │   ├── split_experiment.py        # Phase 12 — train/val/test overfitting check
+│   ├── train_model.py             # Phase 12 — step 1: train + save models
+│   ├── test_model.py              # Phase 12 — step 2: test the saved models
+│   ├── show_results.py            # Phase 12 — step 3: print results (--details)
+│   ├── overfitting_checks.py      # Phase 12 — cross-validation, unseen router,
+│   │                              #   shuffled labels, learning curve
 │   ├── make_plots.py              # Figures for README and slides
 │   ├── demo.py                    # ~3-minute live demo of the whole pipeline
 │   └── indistribution_check.py    # NSL-KDD-era diagnostic (see Phase 5)
@@ -432,7 +437,11 @@ cd presentation && python build_deck.py && python build_handbook_pdf.py
 
 ```
 python src\split_701515.py          # dedup + 70/15/15 per router
-python src\split_experiment.py      # centralized + FedAvg, train/val/test table
+python src\train_model.py           # step 1: train, save models (~30 min)
+python src\test_model.py            # step 2: test the saved models (~1 min)
+python src\show_results.py          # step 3: summary; --details for all tables
+python src\overfitting_checks.py    # extra checks (~1-2 h; parts: cv loro shuffle curve)
+# (src\split_experiment.py runs steps 1 and 2 in one go)
 set KRYPSIS_SPLIT=701515
 python src\protocol_experiment.py   # 45 runs on the new split
 python src\defense_experiment.py    # FLNET2023, 40 runs on the new split
@@ -451,7 +460,16 @@ are the numbers in the final-review deck.
 | FedAvg, IID | 99.99% | 99.99% | 99.99% |
 
 Train, validation and test accuracy are equal: no overfitting. Loss
-curves: `results/split_701515/figures/loss_curves.png`.
+curves: `results/split_701515/figures/loss_curves.png`. FedAvg over the
+10 routers on the test set: precision 100.00%, recall 99.96%, F1 99.98%
+(22 missed attacks, 0 false alarms in 59,016 flows).
+
+| Extra overfitting check | Result |
+|---|---|
+| 5-fold cross-validation | 100.00% test accuracy in every fold (0–3 errors per 78,682 flows) |
+| Leave-one-router-out (router never seen in training) | 99.89–100% on all 10 routers |
+| Shuffled labels (leak check) | 50.0% balanced accuracy = guessing: no leakage |
+| Learning curve (0.1% / 1% / 10% / 50% of training data) | 99.79% / 99.93% / 99.99% / 99.99% test accuracy |
 
 | Label flipping, 2 of 10 routers (15 seeds) | No protocol | Global | Mondrian |
 |---|---|---|---|
@@ -893,6 +911,24 @@ plain HTTP/JSON would be 5.6× larger (Phase 8).
     heterogeneity is real, and the second check removes their extra false
     alarms. The Phase 8–11 conclusion ("global is enough") held on the
     duplicate-heavy split and is superseded here.
+  - **Extra overfitting checks (`src/overfitting_checks.py`),** same MLP
+    and training recipe as the centralized model:
+    - *5-fold cross-validation* over all 393,409 unique flows (stratified
+      by router and label): 100.00% test accuracy in every fold, 0–3
+      errors per 78,682 flows.
+    - *Leave-one-router-out*: trained on 9 routers, tested on the 10th:
+      99.89% (router 1) to 100% on all others, including router 3, the
+      most unusual one.
+    - *Shuffled labels*: trained on randomly permuted labels, the model
+      scores 89.77% on the real test labels, exactly the always-"attack"
+      rate, with 50.0% balanced accuracy. The pipeline leaks nothing.
+    - *Learning curve*: 275 training flows (0.1%) already give 99.79% test
+      accuracy, 1% gives 99.93%, 10% gives 99.99%. The near-perfect score
+      reflects how separable FLNET2023 is, not overfitting.
+  - **Train / test / results as separate steps:** `src/train_model.py`
+    (saves models to `results/split_701515/models/`, not tracked in git),
+    `src/test_model.py`, `src/show_results.py`. A re-run gave identical
+    numbers (fixed seeds, single-threaded TensorFlow).
   - The final-review deck (`presentation/build_final_review.py`) reads
     these results.
 

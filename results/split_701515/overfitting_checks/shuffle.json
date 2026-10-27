@@ -1,0 +1,12 @@
+{
+  "epochs": 18,
+  "threshold": 0.1,
+  "test_with_real_labels": {
+    "accuracy": 0.8976718178121188,
+    "balanced_accuracy": 0.5,
+    "f1": 0.9460769869545418,
+    "errors": 6039,
+    "flows": 59016
+  },
+  "always_attack_accuracy": 0.8976718178121188
+}

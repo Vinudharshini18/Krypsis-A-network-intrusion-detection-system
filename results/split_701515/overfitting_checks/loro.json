@@ -1,0 +1,212 @@
+{
+  "1": {
+    "router": 1,
+    "epochs": 53,
+    "threshold": 0.1,
+    "attack_share": 0.8788429621433652,
+    "train": {
+      "accuracy": 0.9999766546048792,
+      "balanced_accuracy": 0.9999870058993217,
+      "f1": 0.9999870057304728,
+      "errors": 8,
+      "flows": 342680
+    },
+    "unseen_router": {
+      "accuracy": 0.9988935430332727,
+      "balanced_accuracy": 0.9993705035971223,
+      "f1": 0.9993701070817961,
+      "errors": 14,
+      "flows": 12653
+    },
+    "minutes": 7.5
+  },
+  "5": {
+    "router": 5,
+    "epochs": 72,
+    "threshold": 0.1,
+    "attack_share": 0.895859674935056,
+    "train": {
+      "accuracy": 0.9999777720620223,
+      "balanced_accuracy": 0.9999876223617948,
+      "f1": 0.9999876222085871,
+      "errors": 7,
+      "flows": 314919
+    },
+    "unseen_router": {
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "f1": 1.0,
+      "errors": 0,
+      "flows": 43499
+    },
+    "minutes": 9.7
+  },
+  "8": {
+    "router": 8,
+    "epochs": 71,
+    "threshold": 0.1,
+    "attack_share": 0.9197931112027286,
+    "train": {
+      "accuracy": 0.999996970201936,
+      "balanced_accuracy": 0.9999983094000737,
+      "f1": 0.9999983093972156,
+      "errors": 1,
+      "flows": 330055
+    },
+    "unseen_router": {
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "f1": 1.0,
+      "errors": 0,
+      "flows": 26681
+    },
+    "minutes": 9.8
+  },
+  "6": {
+    "router": 6,
+    "epochs": 27,
+    "threshold": 0.1,
+    "attack_share": 0.8942173634009781,
+    "train": {
+      "accuracy": 0.9999840458967642,
+      "balanced_accuracy": 0.9999911181534286,
+      "f1": 0.9999911180745407,
+      "errors": 5,
+      "flows": 313399
+    },
+    "unseen_router": {
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "f1": 1.0,
+      "errors": 0,
+      "flows": 45187
+    },
+    "minutes": 4.1
+  },
+  "2": {
+    "router": 2,
+    "epochs": 65,
+    "threshold": 0.1,
+    "attack_share": 0.928499956495258,
+    "train": {
+      "accuracy": 0.9999840098755008,
+      "balanced_accuracy": 0.9999910530233623,
+      "f1": 0.9999910529433133,
+      "errors": 5,
+      "flows": 312693
+    },
+    "unseen_router": {
+      "accuracy": 0.9998694857739494,
+      "balanced_accuracy": 0.999929717699426,
+      "f1": 0.9999297127594771,
+      "errors": 6,
+      "flows": 45972
+    },
+    "minutes": 9.1
+  },
+  "9": {
+    "router": 9,
+    "epochs": 48,
+    "threshold": 0.1,
+    "attack_share": 0.9346175109843745,
+    "train": {
+      "accuracy": 0.9999783373615525,
+      "balanced_accuracy": 0.999987886423103,
+      "f1": 0.9999878862763625,
+      "errors": 7,
+      "flows": 323137
+    },
+    "unseen_router": {
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "f1": 1.0,
+      "errors": 0,
+      "flows": 34367
+    },
+    "minutes": 6.8
+  },
+  "7": {
+    "router": 7,
+    "epochs": 31,
+    "threshold": 0.1,
+    "attack_share": 0.6963354018091445,
+    "train": {
+      "accuracy": 0.9999907668443536,
+      "balanced_accuracy": 0.9999949586779637,
+      "f1": 0.9999949586525486,
+      "errors": 3,
+      "flows": 324916
+    },
+    "unseen_router": {
+      "accuracy": 0.9999691272266987,
+      "balanced_accuracy": 0.9999778319663046,
+      "f1": 0.999977831474872,
+      "errors": 1,
+      "flows": 32391
+    },
+    "minutes": 4.4
+  },
+  "10": {
+    "router": 10,
+    "epochs": 43,
+    "threshold": 0.1,
+    "attack_share": 0.9237285660035638,
+    "train": {
+      "accuracy": 0.9999847117593326,
+      "balanced_accuracy": 0.9999913964062789,
+      "f1": 0.9999913963322564,
+      "errors": 4,
+      "flows": 261639
+    },
+    "unseen_router": {
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "f1": 1.0,
+      "errors": 0,
+      "flows": 102699
+    },
+    "minutes": 4.4
+  },
+  "3": {
+    "router": 3,
+    "epochs": 40,
+    "threshold": 0.1,
+    "attack_share": 0.4443117857752004,
+    "train": {
+      "accuracy": 0.9999799306748167,
+      "balanced_accuracy": 0.9999889063569745,
+      "f1": 0.9999889062339041,
+      "errors": 7,
+      "flows": 348791
+    },
+    "unseen_router": {
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "f1": 1.0,
+      "errors": 0,
+      "flows": 5863
+    },
+    "minutes": 5.4
+  },
+  "4": {
+    "router": 4,
+    "epochs": 43,
+    "threshold": 0.1,
+    "attack_share": 0.9816540807764701,
+    "train": {
+      "accuracy": 0.9999840956803868,
+      "balanced_accuracy": 0.9999910355708548,
+      "f1": 0.9999910354904932,
+      "errors": 5,
+      "flows": 314380
+    },
+    "unseen_router": {
+      "accuracy": 1.0,
+      "balanced_accuracy": 1.0,
+      "f1": 1.0,
+      "errors": 0,
+      "flows": 44097
+    },
+    "minutes": 414.3
+  }
+}

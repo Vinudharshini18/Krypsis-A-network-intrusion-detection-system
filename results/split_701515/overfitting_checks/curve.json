@@ -1,0 +1,80 @@
+{
+  "points": [
+    {
+      "fraction": 0.001,
+      "train_flows": 275,
+      "epochs": 28,
+      "train": {
+        "accuracy": 0.9963636363636363,
+        "balanced_accuracy": 0.9979757085020242,
+        "f1": 0.9979716024340771,
+        "errors": 1,
+        "flows": 275
+      },
+      "test": {
+        "accuracy": 0.99788193032398,
+        "balanced_accuracy": 0.9983801001064292,
+        "f1": 0.9988189831917688,
+        "errors": 125,
+        "flows": 59016
+      }
+    },
+    {
+      "fraction": 0.01,
+      "train_flows": 2753,
+      "epochs": 80,
+      "train": {
+        "accuracy": 1.0,
+        "balanced_accuracy": 1.0,
+        "f1": 1.0,
+        "errors": 0,
+        "flows": 2753
+      },
+      "test": {
+        "accuracy": 0.9993391622610818,
+        "balanced_accuracy": 0.9986049162426971,
+        "f1": 0.9996318775190433,
+        "errors": 39,
+        "flows": 59016
+      }
+    },
+    {
+      "fraction": 0.1,
+      "train_flows": 27538,
+      "epochs": 80,
+      "train": {
+        "accuracy": 1.0,
+        "balanced_accuracy": 1.0,
+        "f1": 1.0,
+        "errors": 0,
+        "flows": 27538
+      },
+      "test": {
+        "accuracy": 0.9998983326555511,
+        "balanced_accuracy": 0.9997966574383745,
+        "f1": 0.9999433705829055,
+        "errors": 6,
+        "flows": 59016
+      }
+    },
+    {
+      "fraction": 0.5,
+      "train_flows": 137690,
+      "epochs": 63,
+      "train": {
+        "accuracy": 0.9999927373084465,
+        "balanced_accuracy": 0.9999959547580136,
+        "f1": 0.9999959547416496,
+        "errors": 1,
+        "flows": 137690
+      },
+      "test": {
+        "accuracy": 0.9999491663277755,
+        "balanced_accuracy": 0.9999716858259244,
+        "f1": 0.9999716850242093,
+        "errors": 3,
+        "flows": 59016
+      }
+    }
+  ]
+}
